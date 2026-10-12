@@ -1,0 +1,28 @@
+[1/4] MuJoCo simulator (windowed, hands=rigid) -> $PA_ROOT/artifacts/live/sim.log
+[2/4] SONIC policy -> $PA_ROOT/artifacts/live/policy.log   (TensorRT load, ~35 s)
+[3/4] policy ready -- handing over to scripts/getup_verb_probe.py
+[4/4] it will send start, release the band, then take over
+
+[verb] planner parked in IDLE
+1785995082.754956 [0]     python: selected interface "lo" is not multicast-capable: disabling multicast
+[getup] pelvis 0.965 m, contacts NONE -- still ON THE BAND; lowering deterministically
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band bring-down -> standing
+[getup] === after_damp: does the verb still work once auto-damp has fired? ===
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] -> mode lie_face_down (speed -1.0, held True)
+*** FALL DETECTED (in mode 'idle': pelvis 0.19 m is below the 0.30 m floor and tilt 87 deg exceeds 40 deg); auto-damp is OFF ***
+[getup] on the floor: pelvis 0.150 m, contacts R_hand_base_link, left_wrist_pitch_link, right_hip_roll_link, right_shoulder_yaw_link
+*** FALL DETECTED (in mode 'idle': pelvis 0.19 m is below the 0.30 m floor and tilt 87 deg exceeds 40 deg) — motors auto-damped. recover_from_fall can try the measured get-up route; if it reports not standing, reset the robot by hand, then type 'reset-fall'. ***
+[getup] auto-damp fired: True
+*** FALL DETECTED (in mode 'crawl': pelvis 0.07 m is below the 0.26 m floor and tilt 97 deg exceeds 80 deg) — motors auto-damped. recover_from_fall can try the measured get-up route; if it reports not standing, reset the robot by hand, then type 'reset-fall'. ***
+[getup] re-arming the controller (start_control) and retrying ONCE — this separates a dead controller from a bad route
+*** FALL DETECTED (in mode 'crawl': pelvis 0.08 m is below the 0.26 m floor and tilt 106 deg exceeds 80 deg) — motors auto-damped. recover_from_fall can try the measured get-up route; if it reports not standing, reset the robot by hand, then type 'reset-fall'. ***
+[getup] -> mode idle (speed -1.0, held True)
+
+[verb] SUMMARY
+  {"geometry": "after_damp", "damp_fired": true, "verb": {"recovered": false, "route": ["lie_face_down:reached", "crawl:timeout", "kneel_two_legs:timeout", "idle:timeout"], "posture": {"height_m": 0.084, "tilt_deg": 94.7, "standing": false, "note": "NOT STANDING \u2014 pelvis 0.08 m, tilt 95 deg. The robot is on the ground. Commanding an ordinary mode will NOT stand it back up, and repeated attempts keep appearing to succeed. recover_from_fall is the only thing that tries, and it reports its own outcome; if it says the robot is not standing, ask the operator to reset it."}, "relatched_during_route": true, "note": "The route ran to the end and the robot is NOT standing. Do not re-run it blindly \u2014 check the stage outcomes: a 'timeout' names the posture the body never reached. NOTE: the fall detector latched again during the route (in mode 'crawl': pelvis 0.07 m is below the 0.26 m floor and tilt 97 deg exceeds 80 deg). Worth reporting \u2014 the guard may be firing on the recovery itself."}, "body_says_standing": false, "after_rearm": {"verb": {"recovered": false, "route": ["lie_face_down:reached", "crawl:timeout", "kneel_two_legs:timeout", "idle:timeout"], "posture": {"height_m": 0.079, "tilt_deg": 99.5, "standing": false, "note": "NOT STANDING \u2014 pelvis 0.08 m, tilt 100 deg. The robot is on the ground. Commanding an ordinary mode will NOT stand it back up, and repeated attempts keep appearing to succeed. recover_from_fall is the only thing that tries, and it reports its own outcome; if it says the robot is not standing, ask the operator to reset it."}, "relatched_during_route": true, "note": "The route ran to the end and the robot is NOT standing. Do not re-run it blindly \u2014 check the stage outcomes: a 'timeout' names the posture the body never reached. NOTE: the fall detector latched again during the route (in mode 'crawl': pelvis 0.08 m is below the 0.26 m floor and tilt 106 deg exceeds 80 deg). Worth reporting \u2014 the guard may be firing on the recovery itself."}, "body_says_standing": false}}
+[verb] per-trial detail: $PA_ROOT/artifacts/getup_verb/trials.jsonl
+
+[live] shutting down

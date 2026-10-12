@@ -1,0 +1,64 @@
+diff --git a/action_provider/action_provider_wh_dds.py b/action_provider/action_provider_wh_dds.py
+index 016bfc7..ab4c39a 100644
+--- a/action_provider/action_provider_wh_dds.py
++++ b/action_provider/action_provider_wh_dds.py
+@@ -45,6 +45,24 @@ class DDSRLActionProvider(ActionProvider):
+         self._loop_i = 0
+         self._prof = {"physics": 0.0, "render": 0.0, "obs": 0.0, "n": 0}
+         self._prof_every = 200
++        # SONIC_WB_TARGET_RTF pins the real-time factor by sleeping when the
++        # loop runs FASTER than the target, exactly as the SONIC MuJoCo
++        # reference pins 1.0 with an absolute-deadline limiter.
++        #
++        # Why pin rather than go as fast as possible: the external controller
++        # is paced on the wall clock, so it must be slowed by 1/RTF to stay
++        # in step (tools/sonic_timescale.so). A DRIFTING RTF makes that a
++        # coin flip -- measured 2026-08-18, four runs separating perfectly on
++        # whether the scale matched: RTF 0.179 w/ scale 1.0 collapse, 0.296
++        # w/ 2.5 collapse, 0.291 w/ 3.4 STANDS, 0.205 w/ 3.4 collapse. Set
++        # the target BELOW the worst achievable rate and the pairing becomes
++        # deterministic. 0 disables (vendor behaviour).
++        try:
++            self._rtf_target = float(os.environ.get("SONIC_WB_TARGET_RTF", "0"))
++        except ValueError:
++            self._rtf_target = 0.0
++        self._rtf_deadline = None
++        self._rtf_late = 0
+         self.policy_path = f"{project_root}/"+args_cli.model_path
+         self.env = env
+         # Initialize DDS communication
+@@ -546,13 +564,33 @@ class DDSRLActionProvider(ActionProvider):
+             p["render"] += _t2 - _t1
+             p["obs"] += _t3 - _t2
+             p["n"] += 1
++            if self._rtf_target > 0.0:
++                # 20 ms of sim time per iteration (4 x dt 0.005, hard-coded
++                # above), so the wall budget for one iteration is
++                # 0.020 / target.
++                period = 0.020 / self._rtf_target
++                now = time.perf_counter()
++                if self._rtf_deadline is None:
++                    self._rtf_deadline = now + period
++                elif now < self._rtf_deadline:
++                    time.sleep(self._rtf_deadline - now)
++                    self._rtf_deadline += period
++                else:
++                    # Overran the budget: forgive the debt instead of trying
++                    # to catch up, or one slow frame makes every later frame
++                    # sleep-free and the pinning silently stops pinning.
++                    self._rtf_late += 1
++                    self._rtf_deadline = max(self._rtf_deadline + period, now)
+             if p["n"] >= self._prof_every:
+                 n = p["n"]
+                 tot = (p["physics"] + p["render"] + p["obs"]) / n
+                 print(f"[wb-prof] {n} iters: physics {1e3*p['physics']/n:6.1f} ms | "
+                       f"render {1e3*p['render']/n:6.1f} ms | obs {1e3*p['obs']/n:6.1f} ms | "
+                       f"sum {1e3*tot:6.1f} ms -> {0.020/tot:.3f} RTF ceiling "
+-                      f"(render every {self._render_every})", flush=True)
++                      f"(render every {self._render_every}"
++                      + (f", pinned {self._rtf_target:.2f}, {self._rtf_late} late"
++                         if self._rtf_target > 0 else "") + ")", flush=True)
++                self._rtf_late = 0
+                 p.update({"physics": 0.0, "render": 0.0, "obs": 0.0, "n": 0})
+             
+         except Exception as e:

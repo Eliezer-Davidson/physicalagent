@@ -1,0 +1,20 @@
+diff --git a/dds/g1_robot_dds.py b/dds/g1_robot_dds.py
+index 3d65345..94744a2 100644
+--- a/dds/g1_robot_dds.py
++++ b/dds/g1_robot_dds.py
+@@ -98,7 +98,14 @@ class G1RobotDDS(DDSObject):
+             if imu and len(imu) >= 13:
+                 imu_array = np.asarray(imu, dtype=np.float32)
+ 
+-                imu_state.quaternion[:] = imu_array[[4, 5, 6, 3]] #[x,y,z,w]
++                # physicalagent: upstream reordered to [x,y,z,w].
++                # SONIC's deploy binary and GR00T's own MuJoCo bridge both
++                # read imu_state.quaternion as W-FIRST (see
++                # decoupled_wbc/.../unitree_sdk2py_bridge.py: '# quaternion: w, x, y, z').
++                # MEASURED 2026-08-06: with [x,y,z,w] an upright robot published
++                # [0.0039, -0.0224, -0.0415, 0.9989], so SONIC read w=0.004 and
++                # sat at 'LowState is not available' forever. Keep w first.
++                imu_state.quaternion[:] = imu_array[[3, 4, 5, 6]] #[w,x,y,z]
+ 
+                 imu_state.accelerometer[:] = imu_array[7:10]
+ 

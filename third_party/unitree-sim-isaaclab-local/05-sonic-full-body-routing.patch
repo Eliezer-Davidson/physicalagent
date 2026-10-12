@@ -1,0 +1,190 @@
+diff --git a/action_provider/action_provider_wh_dds.py b/action_provider/action_provider_wh_dds.py
+index 5fa68ee..3f971a8 100644
+--- a/action_provider/action_provider_wh_dds.py
++++ b/action_provider/action_provider_wh_dds.py
+@@ -23,6 +23,14 @@ class DDSRLActionProvider(ActionProvider):
+         self.enable_dex3 = args_cli.enable_dex3_dds
+         self.enable_inspire = args_cli.enable_inspire_dds
+         self.wh = args_cli.enable_wholebody_dds
++        # SONIC_WB_FULL_BODY=1: all 29 body joints track rt/lowcmd and the
++        # message's kp/kd become the PhysX drive gains. Without it this mode is
++        # an XR-teleop hybrid (legs = local policy.onnx, waist = defaults,
++        # external controller gets ARMS ONLY) -- not a whole-body backend.
++        self._sonic_full_body = bool(self.wh) and os.environ.get("SONIC_WB_FULL_BODY", "0") == "1"
++        self._gains_applied = False
++        self._fb_refusing = False
++        self._gain_tick = 0
+         self.policy_path = f"{project_root}/"+args_cli.model_path
+         self.env = env
+         # Initialize DDS communication
+@@ -33,7 +41,15 @@ class DDSRLActionProvider(ActionProvider):
+         self.run_command = None
+         self._setup_dds()
+         self._setup_joint_mapping()
+-        self.policy = self.load_policy(self.policy_path)
++        # Full-body mode never runs the local policy; do not load it.
++        self.policy = None if self._sonic_full_body else self.load_policy(self.policy_path)
++        if self.wh:
++            if self._sonic_full_body:
++                print(f"[{self.name}] SONIC FULL-BODY ROUTING ENABLED: all 29 joints track rt/lowcmd, "
++                      f"local policy OFF, waist unpinned, drive gains from the message (SONIC_WB_FULL_BODY=1)", flush=True)
++            else:
++                print(f"[{self.name}] teleop mode: legs=local policy.onnx, waist=defaults, external "
++                      f"controller drives ARMS ONLY (set SONIC_WB_FULL_BODY=1 for a whole-body backend)", flush=True)
+         
+         # 预计算索引张量与复用缓冲
+         device = self.env.device
+@@ -293,6 +309,30 @@ class DDSRLActionProvider(ActionProvider):
+         self.clip_actions = 100
+         self.action_scale = 0.25
+         self.sim_step_counter = 0
++        if self._sonic_full_body:
++            # G1 29-DOF hardware order = unitree_hg LowCmd_ motor index. Verified
++            # against g1_deploy_onnx_ref/include/policy_parameters.hpp:143-176
++            # (kps array comments) and the reference MJCF joint order. The arms
++            # (hw 15..28) are exactly self.arm_joint_names' order.
++            g1_hw_order = [
++                "left_hip_pitch_joint", "left_hip_roll_joint", "left_hip_yaw_joint",
++                "left_knee_joint", "left_ankle_pitch_joint", "left_ankle_roll_joint",
++                "right_hip_pitch_joint", "right_hip_roll_joint", "right_hip_yaw_joint",
++                "right_knee_joint", "right_ankle_pitch_joint", "right_ankle_roll_joint",
++                "waist_yaw_joint", "waist_roll_joint", "waist_pitch_joint",
++            ] + list(self.arm_joint_names)
++            if len(g1_hw_order) != 29:
++                raise ValueError(f"G1 hw order must be 29 joints, got {len(g1_hw_order)}")
++            # KeyError here is deliberate: a missing joint name means the asset
++            # does not match the G1 29-DOF and full-body routing must not start.
++            self._fb_target_indices = [self.joint_to_index[name] for name in g1_hw_order]
++            self._fb_target_idx_t = torch.tensor(self._fb_target_indices, dtype=torch.long, device=self.env.device)
++            self._fb_default_positions = (
++                self.env.scene["robot"].data.default_joint_pos[0, self._fb_target_indices].detach().clone()
++            )
++            # Holds the last ACCEPTED command; starts at the default pose so
++            # the pre-attach hold and every refusal path have a sane target.
++            self._fb_last_targets = self._fb_default_positions.clone()
+     def load_policy(self,path):
+         ext = os.path.splitext(path)[1].lower()
+         if ext==".onnx":
+@@ -377,24 +417,59 @@ class DDSRLActionProvider(ActionProvider):
+         try:
+             full_action = self._full_action_buf
+             full_action.zero_()
+-            action_data = self.run_policy()
++            if self._sonic_full_body:
++                # All 29 body joints are absolute position targets from
++                # rt/lowcmd (hw order -> articulation order). No local policy,
++                # no waist pin, no delay/clip/scale -- these are not RL actions.
++                #
++                # A message is TRACKED only when its gains are positive and it
++                # is fresh. A damp/e-stop command (q=0, kp=0, kd=8) means "no
++                # position authority" on hardware -- tracking its q=0 at the
++                # previous stiff gains would make the robot lunge to full
++                # extension instead of going limp. And the shm slot replays
++                # the last command forever, so a dead controller must not
++                # keep being obeyed as if alive. Refused/stale/absent all hold
++                # the LAST ACCEPTED targets at the current gains.
++                cmd_data = self.robot_dds.get_robot_command() if self.robot_dds else None
++                mc = (cmd_data or {}).get('motor_cmd') or {}
++                positions = mc.get('positions') or []
++                ts = (cmd_data or {}).get('_timestamp')
++                # _timestamp has 1 s resolution; None means an old shm layout.
++                fresh = ts is None or (time.time() - float(ts)) <= 3.0
++                complete = len(positions) >= 29
++                if complete and fresh and self._gains_acceptable(mc):
++                    self._positions_buf.copy_(torch.tensor(positions[:29], dtype=torch.float32, device=self.env.device))
++                    self._fb_last_targets.copy_(self._positions_buf)
++                    self._apply_message_gains(cmd_data)
++                    if self._fb_refusing:
++                        print(f"[{self.name}] rt/lowcmd accepted again; resuming tracking", flush=True)
++                        self._fb_refusing = False
++                elif complete and not self._fb_refusing:
++                    why = ("stale command (controller stopped?)" if not fresh
++                           else "non-positive kp/kd (damp/e-stop?)")
++                    print(f"[{self.name}] REFUSING to track rt/lowcmd: {why} -- "
++                          f"holding last accepted targets", flush=True)
++                    self._fb_refusing = True
++                full_action.index_copy_(0, self._fb_target_idx_t, self._fb_last_targets)
++            else:
++                action_data = self.run_policy()
+ 
+-            # RL 输出与腰部默认位姿
+-            full_action[self.action_to_indices] = action_data
+-            full_action[self.waist_to_all_indices] = self.default_waist_positions
+-            # 机器人指令（若有）
+-            if self.enable_robot == "g129" and self.robot_dds:
+-                cmd_data = self.robot_dds.get_robot_command()
+-                if cmd_data and 'motor_cmd' in cmd_data:
+-                    positions = cmd_data['motor_cmd']['positions']
+-                    if len(positions) >= 29 and hasattr(self, "_arm_source_idx_t"):
+-                        self._positions_buf[:29].copy_(torch.tensor(positions[:29], dtype=torch.float32, device=self.env.device))
+-                        arm_vals = self._positions_buf.index_select(0, self._arm_source_idx_t)
+-                        full_action.index_copy_(0, self._arm_target_idx_t, arm_vals)
+-            # 延时/裁剪/缩放
+-            delayed_actions = self.action_buffer.compute(full_action[self.old_action_indices].unsqueeze(0))
+-            cliped_actions = torch.clip(delayed_actions[:,self.action_to_indices], -self.clip_actions, self.clip_actions).to(self.env.device)
+-            full_action[self.action_to_indices] = cliped_actions * self.action_scale + self.default_action_positions[:, self.action_to_indices]
++                # RL 输出与腰部默认位姿
++                full_action[self.action_to_indices] = action_data
++                full_action[self.waist_to_all_indices] = self.default_waist_positions
++                # 机器人指令（若有）
++                if self.enable_robot == "g129" and self.robot_dds:
++                    cmd_data = self.robot_dds.get_robot_command()
++                    if cmd_data and 'motor_cmd' in cmd_data:
++                        positions = cmd_data['motor_cmd']['positions']
++                        if len(positions) >= 29 and hasattr(self, "_arm_source_idx_t"):
++                            self._positions_buf[:29].copy_(torch.tensor(positions[:29], dtype=torch.float32, device=self.env.device))
++                            arm_vals = self._positions_buf.index_select(0, self._arm_source_idx_t)
++                            full_action.index_copy_(0, self._arm_target_idx_t, arm_vals)
++                # 延时/裁剪/缩放
++                delayed_actions = self.action_buffer.compute(full_action[self.old_action_indices].unsqueeze(0))
++                cliped_actions = torch.clip(delayed_actions[:,self.action_to_indices], -self.clip_actions, self.clip_actions).to(self.env.device)
++                full_action[self.action_to_indices] = cliped_actions * self.action_scale + self.default_action_positions[:, self.action_to_indices]
+             
+             # 夹爪/手指（若有）
+             if self.gripper_dds and hasattr(self, "_gripper_source_idx_t"):
+@@ -448,6 +523,45 @@ class DDSRLActionProvider(ActionProvider):
+             print(f"[{self.name}] Get DDS action failed: {e}")
+             return None
+     
++    def _gains_acceptable(self, mc) -> bool:
++        """True when the message carries 29 strictly positive kp AND kd.
++
++        Evaluated per tick, because it gates POSITION tracking too: a message
++        whose gains are rejected (damp: kp=0) must not have its q obeyed."""
++        kp = mc.get('kp') or []
++        kd = mc.get('kd') or []
++        return (len(kp) >= 29 and len(kd) >= 29
++                and min(kp[:29]) > 0.0 and min(kd[:29]) > 0.0)
++
++    def _apply_message_gains(self, cmd_data):
++        """Write the lowcmd's per-joint kp/kd into the PhysX drives.
++
++        The external controller's PD law is tau = kp*(q_des-q) + kd*(0-dq);
++        the asset's fixed gains are a different plant than the one it was
++        tuned on (shoulders 100/2 vs a commanded ~14.25/0.907). Gains are
++        constants per joint, so one write suffices -- re-applied on a slow
++        cadence so an env reset cannot silently restore the asset gains.
++        Callers gate on _gains_acceptable; the check here is defense in
++        depth -- non-positive gains must never strip the drives.
++        """
++        self._gain_tick += 1
++        if self._gains_applied and (self._gain_tick % 500) != 0:
++            return
++        mc = cmd_data.get('motor_cmd') or {}
++        kp = mc.get('kp') or []
++        kd = mc.get('kd') or []
++        if not self._gains_acceptable(mc):
++            return
++        robot = self.env.scene["robot"]
++        stiffness = torch.tensor([kp[:29]], dtype=torch.float32, device=self.env.device)
++        damping = torch.tensor([kd[:29]], dtype=torch.float32, device=self.env.device)
++        robot.write_joint_stiffness_to_sim(stiffness, joint_ids=self._fb_target_indices)
++        robot.write_joint_damping_to_sim(damping, joint_ids=self._fb_target_indices)
++        if not self._gains_applied:
++            print(f"[{self.name}] SONIC message gains -> PhysX drives (kp hip {kp[0]:.1f}, knee {kp[3]:.1f}, "
++                  f"ankle {kp[4]:.1f}, waist_yaw {kp[12]:.1f}, shoulder {kp[15]:.1f}, wrist_pitch {kp[20]:.1f})", flush=True)
++        self._gains_applied = True
++
+     def _convert_to_joint_range(self, value):
+         """Convert gripper control value to joint angle"""
+         input_min, input_max = 0.0, 5.6

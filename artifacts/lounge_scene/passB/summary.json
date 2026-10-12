@@ -1,0 +1,12 @@
+{
+  "pass": "B",
+  "max_hops": 40,
+  "ok": [
+    "see",
+    "goto_table",
+    "look_thermos"
+  ],
+  "failed": [
+    "pick_thermos"
+  ]
+}

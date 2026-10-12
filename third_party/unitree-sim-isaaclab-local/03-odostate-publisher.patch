@@ -1,0 +1,197 @@
+diff --git a/tasks/common_observations/g1_29dof_state.py b/tasks/common_observations/g1_29dof_state.py
+index 13786f0..178a606 100644
+--- a/tasks/common_observations/g1_29dof_state.py
++++ b/tasks/common_observations/g1_29dof_state.py
+@@ -139,6 +139,183 @@ def _get_g1_robot_dds_instance():
+     
+     return _g1_robot_dds
+ 
++# --- rt/odostate (added by physicalagent) ---------------------------
++# Unitree's sim publishes rt/lowstate (which carries the pelvis IMU, hence tilt)
++# but NOT rt/odostate, which is where world position -- and therefore pelvis
++# HEIGHT -- comes from. Without it _posture(), the fall detector's height
++# channel and every stage of recover_from_fall are blind. GR00T's own MuJoCo
++# bridge publishes it every cycle alongside rt/lowstate, and commented
++# position/linear_velocity OUT of LowState_ precisely because they moved here.
++#
++# Known divergence from that reference bridge, deliberate and bounded: this
++# publisher fires inside the vendor's dds_min_interval_ms throttle (~12 Hz)
++# while the reference publishes every control cycle alongside rt/lowstate.
++# Nothing in the consumer stack needs more (the freshness gate is 0.5 s);
++# recorded here so nobody mistakes the cadence for lockstep with rt/lowstate.
++
++_odo_pub = None
++_odo_warned = set()
++_odo_fields = None
++_odo_to_body = None
++_torso_pub = None
++_torso_unit_quat = None
++_torso_idx = None
++
++
++def _publish_odostate(env):
++    """Publish the robot root pose and velocities on rt/odostate.
++
++    Publishes NOTHING when the state is not trustworthy: a consumer that gets no
++    message says "no rt/odostate received", one that gets zeros believes the
++    robot is on the floor at the origin. ALL 13 floats go through the gate --
++    a validated pose next to a NaN velocity is still an invented message.
++
++    Conventions, matched to GR00T's MuJoCo bridge on the same topic:
++    - orientation is W-FIRST (the IDL comment says [x,y,z,w], but the reference
++      writes floating_base_pose[3:7] w-first and the whole stack reads it so;
++      Isaac Lab's root state is also (w,x,y,z));
++    - velocities are the ROOT LINK's (root_link_state_w), not the COM's --
++      the reference publishes mj qvel, which is the free-joint origin;
++    - angular_velocity is BODY-frame (mj qvel[3:6] convention); Isaac Lab's
++      world-frame value is rotated through world_ang_vel_to_body();
++    - tick is simulation time in MILLISECONDS (reference: int(sim_time*1e3)),
++      not a message counter.
++
++    Every failure -- including the import of the validation module -- degrades
++    to a warn-per-cause path, so a moved or absent physicalagent
++    checkout costs rt/odostate only, never the vendor's whole state publisher.
++    """
++    global _odo_pub, _odo_fields, _odo_to_body
++    try:
++        if _odo_fields is None:
++            import sys as _sys
++            _pa = __import__("os").environ.get("PA_ROOT", "")  # physicalagent root
++            if _pa and _pa not in _sys.path: _sys.path.append(_pa)
++            from simbridge.odostate_fields import (odostate_fields,
++                                                   world_ang_vel_to_body)
++            _odo_fields, _odo_to_body = odostate_fields, world_ang_vel_to_body
++        if _odo_pub is None:
++            from unitree_sdk2py.core.channel import ChannelPublisher
++            from unitree_sdk2py.idl.unitree_hg.msg.dds_ import OdoState_
++            pub = ChannelPublisher("rt/odostate", OdoState_)
++            pub.Init()          # only a FULLY initialised publisher is kept; a
++            _odo_pub = pub      # half-built one would poison every later call
++            print("[odostate] publisher initialized (rt/odostate)", flush=True)
++        root = env.scene["robot"].data.root_link_state_w[0]
++        quat = [float(root[3]), float(root[4]), float(root[5]), float(root[6])]
++        ang_body = _odo_to_body(
++            quat, [float(root[10]), float(root[11]), float(root[12])])
++        if ang_body is None:
++            # Refusing is correct AND worth one breadcrumb per cause: an
++            # instability that never publishes looks identical to a dead
++            # publisher without it.
++            if "gate-refused-angvel" not in _odo_warned:
++                _odo_warned.add("gate-refused-angvel")
++                print("[odostate] gate refused untrustworthy orientation/ang-vel "
++                      "-- publishing nothing (this line prints once)", flush=True)
++            return
++        fields = _odo_fields(
++            [float(root[0]), float(root[1]), float(root[2])], quat,
++            lin_vel_xyz=[float(root[7]), float(root[8]), float(root[9])],
++            ang_vel_xyz=ang_body)
++        if fields is None:
++            if "gate-refused-fields" not in _odo_warned:
++                _odo_warned.add("gate-refused-fields")
++                print("[odostate] gate refused untrustworthy root state "
++                      "-- publishing nothing (this line prints once)", flush=True)
++            return
++        from unitree_sdk2py.idl.unitree_hg.msg.dds_ import OdoState_
++        msg = OdoState_(
++            version=[0, 0],
++            tick=int(env.sim.current_time * 1000) & 0xFFFFFFFF,
++            position=fields["position"],
++            orientation=fields["quaternion_wxyz"],
++            linear_velocity=fields["linear_velocity"],
++            angular_velocity=fields["angular_velocity"],
++            crc=0,
++        )
++        _odo_pub.Write(msg)
++    except Exception as exc:
++        cause = f"{type(exc).__name__}: {exc}"
++        if cause not in _odo_warned:
++            _odo_warned.add(cause)
++            print(f"*** rt/odostate PUBLISH FAILED: {exc!r} -- pelvis height "
++                  "will be unavailable and the fall detector is blind ***",
++                  flush=True)
++
++
++def _publish_secondary_imu(env):
++    """Publish the TORSO IMU on rt/secondary_imu.
++
++    SONIC's deploy binary requires this topic: GatherRobotStateToLogger checks
++    `!ls || !imu_torso` and its failure blocks the PLANNER bring-up, which is
++    why on 2026-08-07 every SONIC mode command was silently ignored on Isaac
++    while balance (which reads only rt/lowstate) worked -- the get-up A/B ran
++    10 clean trials in which the robot never began to kneel.
++
++    Mirrors GR00T's MuJoCo bridge (unitree_sdk2py_bridge.py: torso_imu_state):
++    quaternion w-first from the torso link, gyroscope in the BODY frame
++    (mj qvel convention; Isaac's world-frame value is rotated). Same gate
++    discipline as rt/odostate: untrustworthy state publishes NOTHING.
++    """
++    global _torso_pub, _torso_unit_quat, _torso_idx, _odo_to_body
++    try:
++        if _torso_unit_quat is None:
++            import sys as _sys
++            _pa = __import__("os").environ.get("PA_ROOT", "")  # physicalagent root
++            if _pa and _pa not in _sys.path: _sys.path.append(_pa)
++            from simbridge.odostate_fields import (unit_quat_wxyz,
++                                                   world_ang_vel_to_body)
++            _torso_unit_quat = unit_quat_wxyz
++            if _odo_to_body is None:
++                _odo_to_body = world_ang_vel_to_body
++        if _torso_pub is None:
++            from unitree_sdk2py.core.channel import ChannelPublisher
++            from unitree_sdk2py.idl.unitree_hg.msg.dds_ import IMUState_
++            pub = ChannelPublisher("rt/secondary_imu", IMUState_)
++            pub.Init()          # only a FULLY initialised publisher is kept
++            _torso_pub = pub
++            print("[secondary_imu] publisher initialized (rt/secondary_imu)",
++                  flush=True)
++        robot = env.scene["robot"]
++        if _torso_idx is None:
++            _torso_idx = robot.body_names.index("torso_link")
++        q = robot.data.body_quat_w[0, _torso_idx]
++        w = robot.data.body_ang_vel_w[0, _torso_idx]
++        quat = _torso_unit_quat([float(q[0]), float(q[1]),
++                                 float(q[2]), float(q[3])])
++        if quat is None:
++            # One breadcrumb per cause, same discipline as _publish_odostate:
++            # a persistent refusal here reproduces the exact silent
++            # planner-timeout this publisher exists to prevent.
++            if "torso-gate-quat" not in _odo_warned:
++                _odo_warned.add("torso-gate-quat")
++                print("[secondary_imu] gate refused untrustworthy torso "
++                      "orientation -- publishing nothing (prints once)",
++                      flush=True)
++            return
++        gyro = _odo_to_body(quat, [float(w[0]), float(w[1]), float(w[2])])
++        if gyro is None:
++            if "torso-gate-gyro" not in _odo_warned:
++                _odo_warned.add("torso-gate-gyro")
++                print("[secondary_imu] gate refused untrustworthy torso "
++                      "angular velocity -- publishing nothing (prints once)",
++                      flush=True)
++            return
++        from unitree_sdk2py.idl.default import unitree_hg_msg_dds__IMUState_
++        msg = unitree_hg_msg_dds__IMUState_()
++        msg.quaternion = quat
++        msg.gyroscope = gyro
++        _torso_pub.Write(msg)
++    except Exception as exc:
++        cause = f"secondary_imu {type(exc).__name__}: {exc}"
++        if cause not in _odo_warned:
++            _odo_warned.add(cause)
++            print(f"*** rt/secondary_imu PUBLISH FAILED: {exc!r} -- SONIC's "
++                  "planner cannot initialize without the torso IMU ***",
++                  flush=True)
++
++
+ def get_robot_boy_joint_states(
+     env: ManagerBasedRLEnv,
+     enable_dds: bool = True,
+@@ -220,6 +397,8 @@ def get_robot_boy_joint_states(
+                             imu_data[0].contiguous().cpu().numpy(),
+                         )
+                         _obs_cache["dds_last_ms"] = now_ms
++                        _publish_odostate(env)
++                        _publish_secondary_imu(env)
+         except Exception as e:
+             print(f"[g1_state] Error writing robot state to DDS: {e}")
+     

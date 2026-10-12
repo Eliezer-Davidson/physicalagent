@@ -1,0 +1,31 @@
+[1/4] MuJoCo simulator (windowed, hands=rigid) -> $PA_ROOT/artifacts/live/sim.log
+[2/4] SONIC policy -> $PA_ROOT/artifacts/live/policy.log   (TensorRT load, ~35 s)
+[3/4] policy ready -- handing over to scripts/sonic_console.py
+[4/4] it will send start, release the band, then take over
+
+1785995887.943681 [0]     python: selected interface "lo" is not multicast-capable: disabling multicast
+[link] publisher bound on tcp://*:5556
+[link] sent command{start:1, stop:0, planner:1}
+[link] planner parked in IDLE
+[sim] sidecar ok — cameras: head_camera, hand actuators: 0
+[band] pelvis 0.96 m — lowering the band to rest the feet on the floor before releasing (zero-drop hand-off)
+[band] released — pelvis 0.79 m (was 0.96 m, zero-drop)
+fall watchdog ARMED: mode-aware detector at 10 Hz, auto-damp on confirmed fall. Envelopes cover all 27 modes (sim-derived: measured / vendor / plausible per sonic_fall.ENVELOPES); 'reset-fall' clears the latch after an operator reset.
+Channels this session:
+  ✓ commands  → SONIC over ZMQ
+  ✓ telemetry ← Unitree SDK2 (rt/lowstate, rt/odostate)
+  ✓ camera + lidar + contacts ← simulator sidecar
+G1 console — Gemini Robotics-ER 2 has control of the SIMULATED Unitree G1.
+Watch the MuJoCo window; the robot is off its elastic band and balancing.
+
+  <task>   plain English, e.g. 'walk forward three metres then turn left'
+  stop     halt the robot IMMEDIATELY (does not consult the model)
+  forget   clear the robot's memory of this session's earlier tasks
+  quit     end the session (always halts first)
+
+This drives a simulation. Nothing here is cleared for hardware.
+
+
+g1> ending session.
+
+[live] shutting down

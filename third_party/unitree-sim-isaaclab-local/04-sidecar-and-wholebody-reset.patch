@@ -1,0 +1,81 @@
+diff --git a/sim_main.py b/sim_main.py
+index 14f7241..a5a31bf 100644
+--- a/sim_main.py
++++ b/sim_main.py
+@@ -452,6 +452,35 @@ def main():
+         print("========= start controller =========")
+         controller.start()
+         print("========= start controller success =========")
++
++        # --- physicalagent sidecar (added) --------------------------
++        # Answers pose/contact/camera questions on ZMQ 5570 for the safety
++        # layer and its probes. The ZMQ thread owns the socket end to end and
++        # NEVER touches the env: omni.physx.tensors is not thread-safe, and a
++        # concurrent tensor read raced the physics step into a device-side
++        # CUDA assert that killed the GPU context (2026-08-07, first get-up
++        # A/B attempt). The main loop below feeds it plain-python snapshots
++        # instead. A missing checkout costs the sidecar only.
++        _sidecar_box = {}
++        if not args_cli.replay_data:
++            def _sidecar_loop():
++                try:
++                    import sys as _sys
++                    _pa = __import__("os").environ.get("PA_ROOT", "")  # repo root
++                    if _pa and _pa not in _sys.path: _sys.path.append(_pa)
++                    from simbridge.isaac_sidecar import IsaacSidecar
++                    _sc = IsaacSidecar()
++                    _sidecar_box["sc"] = _sc
++                    print("[sidecar] serving on 5570 (snapshot-fed)", flush=True)
++                except Exception as _exc:
++                    print(f"[sidecar] unavailable: {_exc!r}", flush=True)
++                    return
++                while True:
++                    _sc.poll()
++                    time.sleep(0.005)
++            import threading as _threading
++            _threading.Thread(target=_sidecar_loop,
++                              daemon=True, name="isaac_sidecar").start()
+         
+         # main loop - execute in main thread to support rendering
+         last_stats_time = time.time()
+@@ -468,6 +497,20 @@ def main():
+             while simulation_app.is_running() and controller.is_running:
+                 current_time = time.time()
+                 loop_count += 1
++                # (physicalagent) feed the sidecar a plain-python
++                # world snapshot from THE thread that owns the physics step --
++                # the only thread allowed to touch omni.physx.tensors buffers.
++                # TIME-based throttle, not loop-count: under contact-heavy
++                # physics the loop rate collapses, and every-Nth-iteration
++                # collapsed with it past the sidecar's 1 s staleness gate
++                # (measured 2026-08-07: snapshots went stale mid-descent).
++                _sc = _sidecar_box.get("sc")
++                if _sc is not None and current_time - _sidecar_box.get("t", 0.0) >= 0.1:
++                    _sidecar_box["t"] = current_time
++                    try:
++                        _sc.update_snapshot(env)
++                    except Exception:
++                        pass
+                 if not args_cli.replay_data:
+                     try:
+                         env_state = env.scene.get_state()
+@@ -499,11 +542,17 @@ def main():
+                     if reset_pose_cmd is not None:
+                         try:
+                             reset_category = reset_pose_cmd.get("reset_category")
+-                            if (args_cli.enable_wholebody_dds and (reset_category == '1' or reset_category == '2')) or (not args_cli.enable_wholebody_dds and reset_category == '1'):
++                            # (physicalagent) upstream mapped BOTH
++                            # categories to object-reset in wholebody mode,
++                            # leaving no way to reset the ROBOT over DDS.
++                            # Category '2' now means "reset all" in every
++                            # mode -- the between-trials reset the get-up
++                            # probes need (there is no elastic band here).
++                            if reset_category == '1':
+                                 print("reset object")
+                                 env_cfg.event_manager.trigger("reset_object_self", env)
+                                 reset_pose_dds.write_reset_pose_command(-1)
+-                            elif reset_category == '2' and not args_cli.enable_wholebody_dds:
++                            elif reset_category == '2':
+                                 print("reset all")
+                                 env_cfg.event_manager.trigger("reset_all_self", env)
+                                 reset_pose_dds.write_reset_pose_command(-1)

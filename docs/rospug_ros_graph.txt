@@ -1,0 +1,702 @@
+TOPICS (name -> type)
+======================================================================
+  105 topics total
+
+    /app_control/gait                                    pug_control/Gait
+    /app_control/pose                                    pug_control/Pose
+    /app_control/velocity_move                           pug_control/Velocity
+    /apriltag_detect/image_result                        sensor_msgs/Image
+    /client_count                                        std_msgs/Int32
+    /cmd_vel                                             geometry_msgs/Twist
+    /compressed_image                                    sensor_msgs/CompressedImage
+    /compressed_image/parameter_descriptions             dynamic_reconfigure/ConfigDescription
+    /compressed_image/parameter_updates                  dynamic_reconfigure/Config
+    /connected_clients                                   rosbridge_msgs/ConnectedClients
+    /csi_camera/camera_info                              sensor_msgs/CameraInfo
+    /csi_camera/csi_camera_image_proc_debayer/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/csi_camera_image_proc_debayer/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/csi_camera_image_proc_rectify_color/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/csi_camera_image_proc_rectify_color/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/csi_camera_image_proc_rectify_mono/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/csi_camera_image_proc_rectify_mono/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/image_color                              sensor_msgs/Image
+    /csi_camera/image_color/compressed                   sensor_msgs/CompressedImage
+    /csi_camera/image_color/compressed/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_color/compressed/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/image_color/compressedDepth              sensor_msgs/CompressedImage
+    /csi_camera/image_color/compressedDepth/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_color/compressedDepth/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/image_color/theora                       theora_image_transport/Packet
+    /csi_camera/image_color/theora/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_color/theora/parameter_updates     dynamic_reconfigure/Config
+    /csi_camera/image_mono                               sensor_msgs/Image
+    /csi_camera/image_mono/compressed                    sensor_msgs/CompressedImage
+    /csi_camera/image_mono/compressed/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_mono/compressed/parameter_updates  dynamic_reconfigure/Config
+    /csi_camera/image_mono/compressedDepth               sensor_msgs/CompressedImage
+    /csi_camera/image_mono/compressedDepth/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_mono/compressedDepth/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/image_mono/theora                        theora_image_transport/Packet
+    /csi_camera/image_mono/theora/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_mono/theora/parameter_updates      dynamic_reconfigure/Config
+    /csi_camera/image_raw                                sensor_msgs/Image
+    /csi_camera/image_rect                               sensor_msgs/Image
+    /csi_camera/image_rect/compressed                    sensor_msgs/CompressedImage
+    /csi_camera/image_rect/compressed/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_rect/compressed/parameter_updates  dynamic_reconfigure/Config
+    /csi_camera/image_rect/compressedDepth               sensor_msgs/CompressedImage
+    /csi_camera/image_rect/compressedDepth/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_rect/compressedDepth/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/image_rect/theora                        theora_image_transport/Packet
+    /csi_camera/image_rect/theora/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_rect/theora/parameter_updates      dynamic_reconfigure/Config
+    /csi_camera/image_rect_color                         sensor_msgs/Image
+    /csi_camera/image_rect_color/compressedDepth         sensor_msgs/CompressedImage
+    /csi_camera/image_rect_color/compressedDepth/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_rect_color/compressedDepth/parameter_updates dynamic_reconfigure/Config
+    /csi_camera/image_rect_color/theora                  theora_image_transport/Packet
+    /csi_camera/image_rect_color/theora/parameter_descriptions dynamic_reconfigure/ConfigDescription
+    /csi_camera/image_rect_color/theora/parameter_updates dynamic_reconfigure/Config
+    /diagnostics                                         diagnostic_msgs/DiagnosticArray
+    /face_detect/image_result                            sensor_msgs/Image
+    /front_laser/box_filter/parameter_descriptions       dynamic_reconfigure/ConfigDescription
+    /front_laser/box_filter/parameter_updates            dynamic_reconfigure/Config
+    /hand_gesture/image_result                           sensor_msgs/Image
+    /hand_trajectory/points                              pug_app/Points
+    /imu                                                 sensor_msgs/Imu
+    /imu_corrected                                       sensor_msgs/Imu
+    /joint_states                                        sensor_msgs/JointState
+    /joy                                                 sensor_msgs/Joy
+    /joy/set_feedback                                    sensor_msgs/JoyFeedbackArray
+    /lab_config_manager/image_result                     sensor_msgs/Image
+    /object_tracking/image_result                        sensor_msgs/Image
+    /pug/lb_calf_position_controller/command             std_msgs/Float64
+    /pug/lb_joint_position_controller/command            std_msgs/Float64
+    /pug/lb_thigh_position_controller/command            std_msgs/Float64
+    /pug/lf_calf_position_controller/command             std_msgs/Float64
+    /pug/lf_joint_position_controller/command            std_msgs/Float64
+    /pug/lf_thigh_position_controller/command            std_msgs/Float64
+    /pug/rb_calf_position_controller/command             std_msgs/Float64
+    /pug/rb_joint_position_controller/command            std_msgs/Float64
+    /pug/rb_thigh_position_controller/command            std_msgs/Float64
+    /pug/rf_calf_position_controller/command             std_msgs/Float64
+    /pug/rf_joint_position_controller/command            std_msgs/Float64
+    /pug/rf_thigh_position_controller/command            std_msgs/Float64
+    /pug_control/cmd_vel                                 geometry_msgs/Twist
+    /pug_control/gait                                    pug_control/Gait
+    /pug_control/pose                                    pug_control/Pose
+    /pug_control/velocity_move                           pug_control/Velocity
+    /pug_control/web_controller                          pug_control/WebController
+    /ros_robot_controller/battery                        std_msgs/UInt16
+    /ros_robot_controller/bus_servo/set_state            ros_robot_controller/SetBusServoState
+    /ros_robot_controller/enable_reception               std_msgs/Bool
+    /ros_robot_controller/imu_raw                        sensor_msgs/Imu
+    /ros_robot_controller/pwm_servo/set_state            ros_robot_controller/SetPWMServoState
+    /ros_robot_controller/robot/get_leg_ik_sim           ros_robot_controller/JointAngle
+    /ros_robot_controller/robot/move                     ros_robot_controller/Move
+    /ros_robot_controller/robot/set_gait                 ros_robot_controller/SetGait
+    /ros_robot_controller/robot/set_joint_angle          ros_robot_controller/SetJointAngle
+    /ros_robot_controller/robot/set_pose                 ros_robot_controller/SetPose
+    /ros_robot_controller/robot/stop                     ros_robot_controller/Stop
+    /ros_robot_controller/set_buzzer                     ros_robot_controller/BuzzerState
+    /ros_robot_controller/set_oled                       ros_robot_controller/OLEDState
+    /rosout                                              rosgraph_msgs/Log
+    /rosout_agg                                          rosgraph_msgs/Log
+    /scan                                                sensor_msgs/LaserScan
+    /scan_raw                                            sensor_msgs/LaserScan
+    /tf                                                  tf2_msgs/TFMessage
+    /tf_static                                           tf2_msgs/TFMessage
+    /visual_patrol/image_result                          sensor_msgs/Image
+
+======================================================================
+SERVICES
+======================================================================
+  158 services total
+
+    /app_control/get_param
+    /app_control/go_home
+    /app_control/save_param
+    /app_control/set_param
+    /apriltag_detect/enter
+    /apriltag_detect/exit
+    /apriltag_detect/get_loggers
+    /apriltag_detect/heartbeat
+    /apriltag_detect/set_logger_level
+    /apriltag_detect/set_running
+    /compressed_image/set_parameters
+    /csi_camera/csi_camera_image_proc/get_loggers
+    /csi_camera/csi_camera_image_proc/set_logger_level
+    /csi_camera/csi_camera_image_proc_debayer/set_parameters
+    /csi_camera/csi_camera_image_proc_rectify_color/set_parameters
+    /csi_camera/csi_camera_image_proc_rectify_mono/set_parameters
+    /csi_camera/image_color/compressed/set_parameters
+    /csi_camera/image_color/compressedDepth/set_parameters
+    /csi_camera/image_color/theora/set_parameters
+    /csi_camera/image_mono/compressed/set_parameters
+    /csi_camera/image_mono/compressedDepth/set_parameters
+    /csi_camera/image_mono/theora/set_parameters
+    /csi_camera/image_rect/compressed/set_parameters
+    /csi_camera/image_rect/compressedDepth/set_parameters
+    /csi_camera/image_rect/theora/set_parameters
+    /csi_camera/image_rect_color/compressedDepth/set_parameters
+    /csi_camera/image_rect_color/theora/set_parameters
+    /face_detect/enter
+    /face_detect/exit
+    /face_detect/get_loggers
+    /face_detect/heartbeat
+    /face_detect/set_logger_level
+    /face_detect/set_running
+    /front_laser/box_filter/set_parameters
+    /front_laser/get_loggers
+    /front_laser/set_logger_level
+    /hand_gesture/enter
+    /hand_gesture/exit
+    /hand_gesture/get_loggers
+    /hand_gesture/heartbeat
+    /hand_gesture/set_logger_level
+    /hand_gesture/set_running
+    /hand_trajectory/enter
+    /hand_trajectory/exit
+    /hand_trajectory/get_loggers
+    /hand_trajectory/set_logger_level
+    /hand_trajectory/start
+    /hand_trajectory/stop
+    /imu_calib/get_loggers
+    /imu_calib/set_logger_level
+    /imu_filter/get_loggers
+    /imu_filter/set_logger_level
+    /joint_state_publisher/get_loggers
+    /joint_state_publisher/set_logger_level
+    /joystick/get_loggers
+    /joystick/set_logger_level
+    /joystick_control/get_loggers
+    /joystick_control/set_logger_level
+    /lab_config_manager/change_range
+    /lab_config_manager/enter
+    /lab_config_manager/exit
+    /lab_config_manager/get_all_color_name
+    /lab_config_manager/get_loggers
+    /lab_config_manager/get_range
+    /lab_config_manager/heartbeat
+    /lab_config_manager/save_to_disk
+    /lab_config_manager/set_logger_level
+    /lab_config_manager/set_running
+    /lab_config_manager/stash_range
+    /lidar_app/enter
+    /lidar_app/exit
+    /lidar_app/get_loggers
+    /lidar_app/heartbeat
+    /lidar_app/set_logger_level
+    /lidar_app/set_parameters
+    /lidar_app/set_running
+    /object_tracking/enter
+    /object_tracking/exit
+    /object_tracking/get_loggers
+    /object_tracking/get_target_color
+    /object_tracking/heartbeat
+    /object_tracking/set_logger_level
+    /object_tracking/set_running
+    /object_tracking/set_target_color
+    /object_tracking/set_threshold
+    /oled_display/oled_display_node/get_loggers
+    /oled_display/oled_display_node/set_logger_level
+    /oled_display/on_off
+    /oled_display/set_refresh_enable
+    /oradar_scan/get_loggers
+    /oradar_scan/set_logger_level
+    /performance/enter
+    /performance/exit
+    /performance/get_loggers
+    /performance/heartbeat
+    /performance/set_logger_level
+    /performance/set_self_balancing
+    /performance/set_target
+    /pug_control/enable_sim
+    /pug_control/get_loggers
+    /pug_control/go_home
+    /pug_control/run_action_group
+    /pug_control/set_logger_level
+    /robot_state_publisher/get_loggers
+    /robot_state_publisher/set_logger_level
+    /ros_robot_controller/bus_servo/get_state
+    /ros_robot_controller/get_loggers
+    /ros_robot_controller/pwm_servo/get_state
+    /ros_robot_controller/robot/get_leg_ik_sim
+    /ros_robot_controller/robot/get_leg_position
+    /ros_robot_controller/robot/set_leg_fk
+    /ros_robot_controller/robot/set_leg_ik
+    /ros_robot_controller/set_logger_level
+    /rosapi/action_servers
+    /rosapi/delete_param
+    /rosapi/get_loggers
+    /rosapi/get_param
+    /rosapi/get_param_names
+    /rosapi/get_time
+    /rosapi/has_param
+    /rosapi/message_details
+    /rosapi/node_details
+    /rosapi/nodes
+    /rosapi/publishers
+    /rosapi/search_param
+    /rosapi/service_host
+    /rosapi/service_node
+    /rosapi/service_providers
+    /rosapi/service_request_details
+    /rosapi/service_response_details
+    /rosapi/service_type
+    /rosapi/services
+    /rosapi/services_for_type
+    /rosapi/set_logger_level
+    /rosapi/set_param
+    /rosapi/subscribers
+    /rosapi/topic_type
+    /rosapi/topics
+    /rosapi/topics_and_raw_types
+    /rosapi/topics_for_type
+    /rosbridge_websocket/get_loggers
+    /rosbridge_websocket/set_logger_level
+    /rosout/get_loggers
+    /rosout/set_logger_level
+    /self_balancing/get_loggers
+    /self_balancing/set_logger_level
+    /self_balancing/set_running
+    /visual_patrol/enter
+    /visual_patrol/exit
+    /visual_patrol/get_loggers
+    /visual_patrol/get_target_color
+    /visual_patrol/heartbeat
+    /visual_patrol/set_logger_level
+    /visual_patrol/set_running
+    /visual_patrol/set_target_color
+    /visual_patrol/set_threshold
+    /web_video_server/get_loggers
+    /web_video_server/set_logger_level
+
+======================================================================
+MESSAGE DEFINITIONS for control-relevant topics
+ROS VERSION / MASTER
+======================================================================
+  26 nodes running:
+    /apriltag_detect
+    /csi_camera/csi_camera_image_proc
+    /face_detect
+    /front_laser
+    /hand_gesture
+    /hand_trajectory
+    /imu_calib
+    /imu_filter
+    /joint_state_publisher
+    /joystick
+    /joystick_control
+    /lab_config_manager
+    /lidar_app
+    /object_tracking
+    /oled_display/oled_display_node
+    /oradar_scan
+    /performance
+    /pug_control
+    /robot_state_publisher
+    /ros_robot_controller
+    /rosapi
+    /rosbridge_websocket
+    /rosout
+    /self_balancing
+    /visual_patrol
+    /web_video_server
+
+======================================================================
+TOPICS (name -> type)
+SERVICES
+======================================================================
+  158 services total
+
+    /app_control/get_param
+    /app_control/go_home
+    /app_control/save_param
+    /app_control/set_param
+    /apriltag_detect/enter
+    /apriltag_detect/exit
+    /apriltag_detect/get_loggers
+    /apriltag_detect/heartbeat
+    /apriltag_detect/set_logger_level
+    /apriltag_detect/set_running
+    /compressed_image/set_parameters
+    /csi_camera/csi_camera_image_proc/get_loggers
+    /csi_camera/csi_camera_image_proc/set_logger_level
+    /csi_camera/csi_camera_image_proc_debayer/set_parameters
+    /csi_camera/csi_camera_image_proc_rectify_color/set_parameters
+    /csi_camera/csi_camera_image_proc_rectify_mono/set_parameters
+    /csi_camera/image_color/compressed/set_parameters
+    /csi_camera/image_color/compressedDepth/set_parameters
+    /csi_camera/image_color/theora/set_parameters
+    /csi_camera/image_mono/compressed/set_parameters
+    /csi_camera/image_mono/compressedDepth/set_parameters
+    /csi_camera/image_mono/theora/set_parameters
+    /csi_camera/image_rect/compressed/set_parameters
+    /csi_camera/image_rect/compressedDepth/set_parameters
+    /csi_camera/image_rect/theora/set_parameters
+    /csi_camera/image_rect_color/compressedDepth/set_parameters
+    /csi_camera/image_rect_color/theora/set_parameters
+    /face_detect/enter
+    /face_detect/exit
+    /face_detect/get_loggers
+    /face_detect/heartbeat
+    /face_detect/set_logger_level
+    /face_detect/set_running
+    /front_laser/box_filter/set_parameters
+    /front_laser/get_loggers
+    /front_laser/set_logger_level
+    /hand_gesture/enter
+    /hand_gesture/exit
+    /hand_gesture/get_loggers
+    /hand_gesture/heartbeat
+    /hand_gesture/set_logger_level
+    /hand_gesture/set_running
+    /hand_trajectory/enter
+    /hand_trajectory/exit
+    /hand_trajectory/get_loggers
+    /hand_trajectory/set_logger_level
+    /hand_trajectory/start
+    /hand_trajectory/stop
+    /imu_calib/get_loggers
+    /imu_calib/set_logger_level
+    /imu_filter/get_loggers
+    /imu_filter/set_logger_level
+    /joint_state_publisher/get_loggers
+    /joint_state_publisher/set_logger_level
+    /joystick/get_loggers
+    /joystick/set_logger_level
+    /joystick_control/get_loggers
+    /joystick_control/set_logger_level
+    /lab_config_manager/change_range
+    /lab_config_manager/enter
+    /lab_config_manager/exit
+    /lab_config_manager/get_all_color_name
+    /lab_config_manager/get_loggers
+    /lab_config_manager/get_range
+    /lab_config_manager/heartbeat
+    /lab_config_manager/save_to_disk
+    /lab_config_manager/set_logger_level
+    /lab_config_manager/set_running
+    /lab_config_manager/stash_range
+    /lidar_app/enter
+    /lidar_app/exit
+    /lidar_app/get_loggers
+    /lidar_app/heartbeat
+    /lidar_app/set_logger_level
+    /lidar_app/set_parameters
+    /lidar_app/set_running
+    /object_tracking/enter
+    /object_tracking/exit
+    /object_tracking/get_loggers
+    /object_tracking/get_target_color
+    /object_tracking/heartbeat
+    /object_tracking/set_logger_level
+    /object_tracking/set_running
+    /object_tracking/set_target_color
+    /object_tracking/set_threshold
+    /oled_display/oled_display_node/get_loggers
+    /oled_display/oled_display_node/set_logger_level
+    /oled_display/on_off
+    /oled_display/set_refresh_enable
+    /oradar_scan/get_loggers
+    /oradar_scan/set_logger_level
+    /performance/enter
+    /performance/exit
+    /performance/get_loggers
+    /performance/heartbeat
+    /performance/set_logger_level
+    /performance/set_self_balancing
+    /performance/set_target
+    /pug_control/enable_sim
+    /pug_control/get_loggers
+    /pug_control/go_home
+    /pug_control/run_action_group
+    /pug_control/set_logger_level
+    /robot_state_publisher/get_loggers
+    /robot_state_publisher/set_logger_level
+    /ros_robot_controller/bus_servo/get_state
+    /ros_robot_controller/get_loggers
+    /ros_robot_controller/pwm_servo/get_state
+    /ros_robot_controller/robot/get_leg_ik_sim
+    /ros_robot_controller/robot/get_leg_position
+    /ros_robot_controller/robot/set_leg_fk
+    /ros_robot_controller/robot/set_leg_ik
+    /ros_robot_controller/set_logger_level
+    /rosapi/action_servers
+    /rosapi/delete_param
+    /rosapi/get_loggers
+    /rosapi/get_param
+    /rosapi/get_param_names
+    /rosapi/get_time
+    /rosapi/has_param
+    /rosapi/message_details
+    /rosapi/node_details
+    /rosapi/nodes
+    /rosapi/publishers
+    /rosapi/search_param
+    /rosapi/service_host
+    /rosapi/service_node
+    /rosapi/service_providers
+    /rosapi/service_request_details
+    /rosapi/service_response_details
+    /rosapi/service_type
+    /rosapi/services
+    /rosapi/services_for_type
+    /rosapi/set_logger_level
+    /rosapi/set_param
+    /rosapi/subscribers
+    /rosapi/topic_type
+    /rosapi/topics
+    /rosapi/topics_and_raw_types
+    /rosapi/topics_for_type
+    /rosbridge_websocket/get_loggers
+    /rosbridge_websocket/set_logger_level
+    /rosout/get_loggers
+    /rosout/set_logger_level
+    /self_balancing/get_loggers
+    /self_balancing/set_logger_level
+    /self_balancing/set_running
+    /visual_patrol/enter
+    /visual_patrol/exit
+    /visual_patrol/get_loggers
+    /visual_patrol/get_target_color
+    /visual_patrol/heartbeat
+    /visual_patrol/set_logger_level
+    /visual_patrol/set_running
+    /visual_patrol/set_target_color
+    /visual_patrol/set_threshold
+    /web_video_server/get_loggers
+    /web_video_server/set_logger_level
+
+======================================================================
+MESSAGE DEFINITIONS for control-relevant topics
+MESSAGE DEFINITIONS for control-relevant topics
+======================================================================
+
+  --- /app_control/gait   [pug_control/Gait]
+        float32                      overlap_time
+        float32                      swing_time
+        float32                      clearance_time
+        float32                      z_clearance
+
+  --- /app_control/pose   [pug_control/Pose]
+        float32                      roll
+        float32                      pitch
+        float32                      yaw
+        float32                      height
+        float32                      x_shift
+        float32                      stance_x
+        float32                      stance_y
+        float32                      run_time
+
+  --- /app_control/velocity_move   [pug_control/Velocity]
+        float32                      x
+        float32                      y
+        float32                      yaw_rate
+        bool                         stop
+
+  --- /cmd_vel   [geometry_msgs/Twist]
+        geometry_msgs/Vector3        linear
+        geometry_msgs/Vector3        angular
+        float64                      x
+        float64                      y
+        float64                      z
+
+  --- /imu   [sensor_msgs/Imu]
+        std_msgs/Header              header
+        geometry_msgs/Quaternion     orientation
+        float64                      orientation_covariance
+        geometry_msgs/Vector3        angular_velocity
+        float64                      angular_velocity_covariance
+        geometry_msgs/Vector3        linear_acceleration
+        float64                      linear_acceleration_covariance
+        uint32                       seq
+        time                         stamp
+        string                       frame_id
+
+  --- /imu_corrected   [sensor_msgs/Imu]
+        std_msgs/Header              header
+        geometry_msgs/Quaternion     orientation
+        float64                      orientation_covariance
+        geometry_msgs/Vector3        angular_velocity
+        float64                      angular_velocity_covariance
+        geometry_msgs/Vector3        linear_acceleration
+        float64                      linear_acceleration_covariance
+        uint32                       seq
+        time                         stamp
+        string                       frame_id
+
+  --- /joint_states   [sensor_msgs/JointState]
+        std_msgs/Header              header
+        string                       name
+        float64                      position
+        float64                      velocity
+        float64                      effort
+        uint32                       seq
+        time                         stamp
+        string                       frame_id
+
+  --- /pug/lb_calf_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/lb_joint_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/lb_thigh_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/lf_calf_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/lf_joint_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/lf_thigh_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/rb_calf_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/rb_joint_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/rb_thigh_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/rf_calf_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/rf_joint_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug/rf_thigh_position_controller/command   [std_msgs/Float64]
+        float64                      data
+
+  --- /pug_control/cmd_vel   [geometry_msgs/Twist]
+        geometry_msgs/Vector3        linear
+        geometry_msgs/Vector3        angular
+        float64                      x
+        float64                      y
+        float64                      z
+
+  --- /pug_control/gait   [pug_control/Gait]
+        float32                      overlap_time
+        float32                      swing_time
+        float32                      clearance_time
+        float32                      z_clearance
+
+  --- /pug_control/pose   [pug_control/Pose]
+        float32                      roll
+        float32                      pitch
+        float32                      yaw
+        float32                      height
+        float32                      x_shift
+        float32                      stance_x
+        float32                      stance_y
+        float32                      run_time
+
+  --- /pug_control/velocity_move   [pug_control/Velocity]
+        float32                      x
+        float32                      y
+        float32                      yaw_rate
+        bool                         stop
+
+  --- /pug_control/web_controller   [pug_control/WebController]
+        float32                      gait
+        float32                      foot_height
+        float32                      period
+        float32                      x
+        float32                      y
+        float32                      yaw_rate
+        bool                         stop
+
+  --- /ros_robot_controller/battery   [std_msgs/UInt16]
+        uint16                       data
+
+  --- /ros_robot_controller/bus_servo/set_state   [ros_robot_controller/SetBusServoState]
+        ros_robot_controller/BusServoState state
+        float64                      duration
+        uint16                       present_id
+        uint16                       target_id
+        uint16                       position
+        int16                        offset
+        uint16                       voltage
+        uint16                       temperature
+        uint16                       position_limit
+        uint16                       voltage_limit
+        uint16                       max_temperature_limit
+        uint16                       enable_torque
+        uint16                       save_offset
+        uint16                       stop
+
+  --- /ros_robot_controller/imu_raw   [sensor_msgs/Imu]
+        std_msgs/Header              header
+        geometry_msgs/Quaternion     orientation
+        float64                      orientation_covariance
+        geometry_msgs/Vector3        angular_velocity
+        float64                      angular_velocity_covariance
+        geometry_msgs/Vector3        linear_acceleration
+        float64                      linear_acceleration_covariance
+        uint32                       seq
+        time                         stamp
+        string                       frame_id
+
+  --- /ros_robot_controller/pwm_servo/set_state   [ros_robot_controller/SetPWMServoState]
+        ros_robot_controller/PWMServoState state
+        float64                      duration
+        uint16                       id
+        uint16                       position
+        int16                        offset
+
+  --- /ros_robot_controller/robot/set_gait   [ros_robot_controller/SetGait]
+        float32                      overlap_time
+        float32                      swing_time
+        float32                      clearance_time
+        float32                      z_clearance
+
+  --- /ros_robot_controller/robot/set_joint_angle   [ros_robot_controller/SetJointAngle]
+        float32                      joint_angle
+        float32                      duration
+
+  --- /ros_robot_controller/robot/set_pose   [ros_robot_controller/SetPose]
+        float32                      x
+        float32                      y
+        float32                      z
+        float32                      x_shift
+        float32                      roll
+        float32                      pitch
+        float32                      duration
+
+  --- /scan   [sensor_msgs/LaserScan]
+        std_msgs/Header              header
+        float32                      angle_min
+        float32                      angle_max
+        float32                      angle_increment
+        float32                      time_increment
+        float32                      scan_time
+        float32                      range_min
+        float32                      range_max
+        float32                      ranges
+        float32                      intensities
+        uint32                       seq
+        time                         stamp
+        string                       frame_id
+
+  --- /scan_raw   [sensor_msgs/LaserScan]
+        std_msgs/Header              header
+        float32                      angle_min
+        float32                      angle_max
+        float32                      angle_increment
+        float32                      time_increment
+        float32                      scan_time
+        float32                      range_min
+        float32                      range_max
+        float32                      ranges
+        float32                      intensities
+        uint32                       seq
+        time                         stamp
+        string                       frame_id
+
+======================================================================
+CAMERA TOPIC PUBLISHERS (why are no frames flowing?)

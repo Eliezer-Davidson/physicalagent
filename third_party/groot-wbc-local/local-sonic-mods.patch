@@ -1,0 +1,1808 @@
+diff --git a/gear_sonic/pyproject.toml b/gear_sonic/pyproject.toml
+index 471ce16..fa1a28c 100644
+--- a/gear_sonic/pyproject.toml
++++ b/gear_sonic/pyproject.toml
+@@ -88,7 +88,7 @@ inference = [
+     "tyro",
+     "opencv-python",
+     "scipy",
+-    "Isaac-GR00T @ git+https://github.com/NVIDIA/Isaac-GR00T.git",
++    "gr00t @ file://${ISAAC_GROOT_ROOT}",   # set to your Isaac-GR00T checkout
+ ]
+ # Training: full RL training stack (Isaac Lab must be installed separately)
+ # Usage: pip install -e "gear_sonic[training]"
+diff --git a/gear_sonic/utils/mujoco_sim/base_sim.py b/gear_sonic/utils/mujoco_sim/base_sim.py
+index fe8f4a0..917406a 100644
+--- a/gear_sonic/utils/mujoco_sim/base_sim.py
++++ b/gear_sonic/utils/mujoco_sim/base_sim.py
+@@ -9,6 +9,7 @@ import os
+ import pathlib
+ from pathlib import Path
+ import pickle
++import sys
+ import tempfile
+ from threading import Lock, Thread
+ import time
+@@ -26,6 +27,29 @@ from gear_sonic.utils.mujoco_sim.sim_utils import get_subtree_body_names
+ from gear_sonic.utils.mujoco_sim.unitree_sdk2py_bridge import ElasticBand, UnitreeSdk2Bridge
+ from gear_sonic.utils.mujoco_sim.robot import Robot
+ 
++# LOCAL ADDITION 2026-07-31 (local): how far the simulation may fall behind its
++# schedule before the shortfall is forgiven rather than repaid. 50 ms is ten
++# control steps -- enough to absorb a viewer sync or a camera render, far short
++# of the 500 ms at which the SONIC policy declares the robot disconnected and
++# stops controlling it for good.
++MAX_SCHEDULE_DEBT_S = 0.05
++
++# LOCAL ADDITION 2026-08-01 (local): pelvis height below which check_fall()
++# declares a fall and RESETS the episode. The vendor hard-codes 0.20.
++#
++# 0.20 is a standing-robot threshold and it makes two of SONIC's own locomotion
++# modes impossible to run: lie_face_down (7) puts the pelvis ON THE FLOOR by
++# definition, and elbow_crawl (14) is commanded at height 0.30 and measured at
++# 0.206 before tripping it. Both entered a reset loop -- teleport to origin,
++# collapse, teleport again -- which is not a failed mode, it is a harness that
++# cannot represent the mode. A crawl at height 0.40 sits at 0.41-0.47 and is
++# unaffected, which is why only two of the three broke.
++#
++# SIM ONLY. This threshold is the simulator's episode bookkeeping and has no
++# hardware counterpart; nothing here may be carried to the robot, in the same
++# way --disable-crc-check may not.
++FALL_RESET_HEIGHT_M = float(os.environ.get("SONIC_FALL_RESET_M", "0.20"))
++
+ GEAR_SONIC_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+ 
+ 
+@@ -62,6 +86,29 @@ class DefaultEnv:
+         self.onscreen = onscreen
+ 
+         self.init_scene()
++
++        # LOCAL ADDITION 2026-07-31 (local): let a scene carry more actuators
++        # than the vendor loop drives -- specifically actuated Inspire fingers.
++        # mj_data.ctrl is assigned whole further down, so the torque vector has
++        # to match mj_model.nu exactly or the assignment raises. On every scene
++        # the vendor ships, nu already equals this and both lines are no-ops.
++        #
++        # The extra actuators MUST be listed in the MJCF in joint order, because
++        # the body torques are scattered by `torques[joint_index - 1]` and that
++        # only lands on the right actuator while actuator k drives joint k+1.
++        if self.mj_model.nu > self.torques.shape[0]:
++            body_limits = self.torque_limit
++            self.torques = np.zeros(self.mj_model.nu)
++            # Start from each actuator's OWN declared force range -- falling back
++            # to a body joint's 88 Nm would let a fingertip throw the robot --
++            # then restore the vendor's body limits at the body actuators.
++            # Scattered by index rather than concatenated, because the extra
++            # actuators are interleaved with the body ones, not appended.
++            limits = np.abs(self.mj_model.actuator_forcerange[:, 1]).copy()
++            limits[limits == 0] = 1.0
++            limits[np.asarray(self.body_joint_index) - 1] = body_limits
++            self.torque_limit = limits
++
+         self.last_reward = 0
+ 
+         self.offscreen = offscreen
+@@ -181,6 +228,16 @@ class DefaultEnv:
+                     "The absolute static root will make the simulation unstable."
+                 )
+ 
++        # Default it so the disabled path is usable. Line ~394 tests
++        # `if self.elastic_band:` — which is the intended semantics — but the
++        # attribute was only ever SET inside the enabled branch, so running with
++        # ENABLE_ELASTIC_BAND: False raised
++        #   AttributeError: 'DefaultEnv' object has no attribute 'elastic_band'
++        # on the first physics step and closed the simulator. That made headless
++        # operation impossible, because the band can only be released with key 9
++        # in a viewer window. (local patch, 2026-07-31)
++        self.elastic_band = None
++
+         # Enable the elastic band
+         if self.config["ENABLE_ELASTIC_BAND"] and self.use_floating_root_link:
+             self.elastic_band = ElasticBand()
+@@ -387,10 +444,53 @@ class DefaultEnv:
+         return obs
+ 
+     def sim_step(self):
++        if os.environ.get("SONIC_PROFILE"):
++            return self._sim_step_profiled()
++        return self._sim_step()
++
++    # LOCAL ADDITION 2026-07-31 (local): per-phase timing, off unless
++    # SONIC_PROFILE is set. The loop has to finish inside SIMULATE_DT (5 ms) to
++    # run at real speed, and when it does not there is nothing to say WHICH part
++    # overran -- the symptom is just a robot that moves in slow motion.
++    def _sim_step_profiled(self):
++        t = time.perf_counter
++        acc = getattr(self, "_prof", None)
++        if acc is None:
++            acc = self._prof = {"n": 0, "phases": {}, "t0": t()}
++        marks = []
++        self._sim_step(marks=marks, clock=t)
++        acc["n"] += 1
++        for name, dt in marks:
++            acc["phases"][name] = acc["phases"].get(name, 0.0) + dt
++        if acc["n"] % 400 == 0:                      # ~ every 2 s of sim time
++            wall = t() - acc["t0"]
++            per = {k: v / acc["n"] * 1000 for k, v in acc["phases"].items()}
++            total = sum(per.values())
++            rows = " ".join(f"{k}={v:.2f}" for k, v in
++                            sorted(per.items(), key=lambda kv: -kv[1]))
++            print(f"[prof] step {total:.2f} ms (budget {self.sim_dt * 1000:.1f}) "
++                  f"| realtime {acc['n'] * self.sim_dt / wall:.2f}x | {rows}",
++                  flush=True)
++            acc["n"] = 0
++            acc["phases"] = {}
++            acc["t0"] = t()
++
++    def _sim_step(self, marks=None, clock=None):
++        def mark(name, since):
++            if marks is not None:
++                marks.append((name, clock() - since))
++                return clock()
++            return 0.0
++
++        s = clock() if marks is not None else 0.0
+         self.obs = self.prepare_obs()
++        s = mark("obs", s)
+         self.unitree_bridge.PublishLowState(self.obs)
++        s = mark("publish", s)
+         if self.unitree_bridge.joystick:
+             self.unitree_bridge.PublishWirelessController()
++        self._check_band_release_file()
++        s = mark("band", s)
+         if self.elastic_band:
+             if self.elastic_band.enable and self.use_floating_root_link:
+                 pose = np.concatenate(
+@@ -412,13 +512,18 @@ class DefaultEnv:
+                 self.mj_data.xfrc_applied[self.band_attached_link] = self.elastic_band.Advance(pose)
+             else:
+                 self.mj_data.xfrc_applied[self.band_attached_link] = np.zeros(6)
++        s = mark("elastic", s)
++        self._sidecar_poll()
++        s = mark("sidecar", s)
+         body_torques = self.compute_body_torques()
+         hand_torques = self.compute_hand_torques()
++        s = mark("torques", s)
+         # -1: actuator array is 0-based while joint indices from the model are 1-based
+         self.torques[self.body_joint_index - 1] = body_torques
+         if self.num_hand_dof > 0:
+             self.torques[self.left_hand_index - 1] = hand_torques[: self.num_hand_dof]
+             self.torques[self.right_hand_index - 1] = hand_torques[self.num_hand_dof :]
++        self._apply_finger_torques()
+ 
+         self.torques = np.clip(self.torques, -self.torque_limit, self.torque_limit)
+ 
+@@ -428,8 +533,139 @@ class DefaultEnv:
+         else:
+             self.mj_data.ctrl = self.torques
+         mujoco.mj_step(self.mj_model, self.mj_data)
++        s = mark("mj_step", s)
+ 
++        self._log_pose()
+         self.check_fall()
++        mark("log+fall", s)
++
++    # --- LOCAL ADDITION 2026-07-31 (local) -----------------------------------
++    # Sidecar: a request/reply socket served from inside the simulation loop, so
++    # an agent outside the process can ask what the robot SEES and what is
++    # AROUND it. Those are properties of the world; no amount of Unitree DDS
++    # telemetry carries them, because the robot does not know them either.
++    #
++    # Served here rather than from a thread on purpose. mj_data is rewritten at
++    # 200 Hz, so a concurrent reader gets a position from one step and a
++    # velocity from the next -- a torn snapshot that looks entirely plausible and
++    # is impossible to debug downstream. Between mj_step calls there is exactly
++    # one coherent state, and this is where it is.
++    #
++    # Off unless SONIC_SIDECAR_PORT is set; no behaviour change when unset.
++    # The implementation lives outside this vendor tree (physicalagent/
++    # simbridge/sidecar.py) so it stays owned, tested and portable; SONIC_SIDECAR_PATH
++    # points at it.
++    def _sidecar_poll(self):
++        sc = getattr(self, "_sidecar", None)
++        if sc is None:
++            if getattr(self, "_sidecar_off", False):
++                return
++            port = os.environ.get("SONIC_SIDECAR_PORT")
++            if not port:
++                self._sidecar_off = True
++                return
++            self._sidecar_off = True          # one attempt; never retry per step
++            path = os.environ.get("SONIC_SIDECAR_PATH")
++            try:
++                if path and path not in sys.path:
++                    sys.path.insert(0, path)
++                from simbridge.sidecar import Sidecar
++
++                self.sidecar_finger_targets = {}
++                self._sidecar = sc = Sidecar(self, port=int(port))
++                self._sidecar_off = False
++            except Exception as exc:
++                print(f"[sidecar] disabled: {exc}", flush=True)
++                return
++        sc.poll()
++
++    # Finger actuators, if this scene has any. The vendor loop drives the 29
++    # body motors and (on a Dex3 scene) the two 7-DOF hands; anything past that
++    # is ours. Targets are set over the sidecar and held, and the PD law here is
++    # the same shape as the one the Unitree bridge runs for the body, so a
++    # finger behaves like every other joint in this simulation rather than
++    # snapping to a pose kinematically.
++    FINGER_KP = 2.0
++    FINGER_KD = 0.05
++
++    def _apply_finger_torques(self):
++        targets = getattr(self, "sidecar_finger_targets", None)
++        if not targets:
++            return
++        for actuator_id, q_des in targets.items():
++            joint_id = int(self.mj_model.actuator_trnid[actuator_id][0])
++            qadr = int(self.mj_model.jnt_qposadr[joint_id])
++            vadr = int(self.mj_model.jnt_dofadr[joint_id])
++            self.torques[actuator_id] = (
++                self.FINGER_KP * (q_des - self.mj_data.qpos[qadr])
++                - self.FINGER_KD * self.mj_data.qvel[vadr]
++            )
++
++    # File-triggered elastic-band release.
++    #
++    # The band is normally dropped by pressing 9 in the viewer, which is fine for
++    # a human and unreliable for an automated bring-up: the only way to
++    # synthesise that keystroke on this box is XTEST (xdotool is not installed),
++    # and XTEST focus on an XWayland surface fails intermittently -- observed
++    # succeeding three runs in a row and then failing four attempts in a row on
++    # 2026-07-31. A failed release is especially nasty because it is SILENT and
++    # looks exactly like a dead command path: the robot hangs at ~0.96 m and
++    # every walk command does nothing.
++    #
++    # The band is a simulator-side object, so the simulator should be the one to
++    # drop it. Touch the file named by SONIC_BAND_RELEASE_FILE and it releases,
++    # deterministically, with no window, no focus and no X server involved. The
++    # keyboard path still works and is unchanged.
++    def _check_band_release_file(self):
++        if getattr(self, "_band_release_done", False):
++            return
++        path = getattr(self, "_band_release_path", None)
++        if path is None:
++            path = self._band_release_path = os.environ.get("SONIC_BAND_RELEASE_FILE", "")
++        if not path or not os.path.exists(path):
++            return
++        self._band_release_done = True
++        if self.elastic_band is not None:
++            self.elastic_band.enable = False
++            print(f"ElasticBand released by {path} (enable=False)", flush=True)
++
++    # Ground-truth root pose logger. The viewer camera defaults to
++    # mjCAMERA_TRACKING on the pelvis, so the robot stays centred in frame
++    # whether or not it actually translates -- video alone cannot tell walking
++    # from marching in place. Nothing on the DDS side carries world position
++    # either (rt/lowstate has IMU only). So the sim writes it out directly.
++    # Off unless SONIC_POSE_LOG is set; no behaviour change when unset.
++    #
++    # Throttled on WALL time, deliberately. Throttling on mj_data.time looks
++    # equivalent and is not: when the sim stalls, or resets (check_fall ->
++    # mj_resetData sets time back to 0), sim-time-gating silently emits NO rows
++    # for the whole affected span. The gap then reads as a position
++    # discontinuity -- a 2 m "teleport" between two adjacent rows -- and the run
++    # becomes unattributable. Wall-time gating makes a stall show up as
++    # repeated identical rows, which is honest, and every reset is marked.
++    def _log_pose(self):
++        if getattr(self, "_pose_off", False):
++            return
++        f = getattr(self, "_pose_fh", None)
++        if f is None:
++            path = os.environ.get("SONIC_POSE_LOG")
++            if not path:
++                self._pose_off = True
++                return
++            f = self._pose_fh = open(f"{path}.{os.getpid()}", "w", buffering=1)
++            f.write("wall_s,sim_s,x,y,z,event\n")
++        now = time.time()
++        t = self.mj_data.time
++        event = ""
++        if t < getattr(self, "_pose_last_sim", 0.0) - 1e-9:
++            event = "RESET"          # sim time went backwards: mj_resetData ran
++        self._pose_last_sim = t
++        if event == "" and now - getattr(self, "_pose_last_wall", 0.0) < 0.05:
++            return
++        self._pose_last_wall = now
++        q = self.mj_data.qpos
++        f.write(f"{now:.3f},{t:.3f},{q[0]:.4f},{q[1]:.4f},{q[2]:.4f},{event}\n")
++    # --- end local addition ---------------------------------------------------
+ 
+     def apply_perturbation(self, key):
+         perturbation_x_body = 0.0
+@@ -507,9 +743,10 @@ class DefaultEnv:
+ 
+     def check_fall(self):
+         self.fall = False
+-        if self.mj_data.qpos[2] < 0.2:
++        if self.mj_data.qpos[2] < FALL_RESET_HEIGHT_M:
+             self.fall = True
+-            print(f"Warning: Robot has fallen, height: {self.mj_data.qpos[2]:.3f} m")
++            print(f"Warning: Robot has fallen, height: {self.mj_data.qpos[2]:.3f} m "
++                  f"(reset threshold {FALL_RESET_HEIGHT_M:.2f} m, SONIC_FALL_RESET_M)")
+ 
+         if self.fall:
+             self.reset()
+@@ -599,6 +836,7 @@ class BaseSimulator:
+         """Main simulation loop"""
+         sim_cnt = 0
+         ts = time.time()
++        next_deadline = time.monotonic()
+ 
+         try:
+             while self._running and (
+@@ -616,7 +854,16 @@ class BaseSimulator:
+                     ts = now
+ 
+                 if sim_cnt % int(self.viewer_dt / self.sim_dt) == 0:
++                    _vt = time.perf_counter()
+                     self.sim_env.update_viewer()
++                    # LOCAL ADDITION (local): viewer.sync() lives OUTSIDE
++                    # sim_step, so per-phase timing there cannot see it. It runs
++                    # at 1/viewer_dt Hz and blocks the physics while it draws.
++                    if os.environ.get("SONIC_PROFILE"):
++                        _p = getattr(self.sim_env, "_prof", None)
++                        if _p:
++                            _p["phases"]["viewer(outer)"] = _p["phases"].get(
++                                "viewer(outer)", 0.0) + (time.perf_counter() - _vt)
+ 
+                 if sim_cnt % int(self.reward_dt / self.sim_dt) == 0:
+                     self.sim_env.update_reward()
+@@ -624,11 +871,34 @@ class BaseSimulator:
+                 if sim_cnt % int(self.image_dt / self.sim_dt) == 0:
+                     self.sim_env.update_render_caches()
+ 
+-                # Simple rate limiter (replaces ROS rate)
+-                elapsed = time.monotonic() - step_start
+-                sleep_time = self.sim_dt - elapsed
+-                if sleep_time > 0:
+-                    time.sleep(sleep_time)
++                # LOCAL ADDITION 2026-07-31 (local): absolute-deadline rate
++                # limiter, replacing a per-step one that could only ever lose
++                # time.
++                #
++                # The old form measured from THIS step's start and slept the
++                # remainder, so a step that overran was simply gone -- and the
++                # cheap steps that followed slept away the slack that could have
++                # made it up. The viewer costs ~8.5 ms and runs every 4th step,
++                # against a 5 ms budget, so every 4 steps lost ~5 ms: 3x5 + 10.3
++                # = 25.3 ms of wall for 20 ms of simulation. That is 0.79x, and
++                # it was the single largest reason this ran in slow motion.
++                #
++                # Against a fixed schedule, the three cheap steps (~1.8 ms of
++                # work each in a 5 ms slot) have 9.6 ms of spare capacity per
++                # four steps, which comfortably absorbs one 8.5 ms viewer sync.
++                #
++                # The debt is CAPPED. Without a cap, one long stall (a 300 ms
++                # renderer build, a laptop suspend) would be repaid as a burst of
++                # dozens of back-to-back steps with no sleep -- which starves
++                # everything else on the box and can trip the policy's own
++                # 500 ms lowstate watchdog, i.e. the cure causing the disease.
++                # Past the cap the debt is forgiven and the clock simply slips.
++                next_deadline += self.sim_dt
++                now = time.monotonic()
++                if now < next_deadline:
++                    time.sleep(next_deadline - now)
++                elif now - next_deadline > MAX_SCHEDULE_DEBT_S:
++                    next_deadline = now
+ 
+                 sim_cnt += 1
+         except KeyboardInterrupt:
+diff --git a/gear_sonic/utils/mujoco_sim/configs.py b/gear_sonic/utils/mujoco_sim/configs.py
+index 5ec03fa..286a818 100644
+--- a/gear_sonic/utils/mujoco_sim/configs.py
++++ b/gear_sonic/utils/mujoco_sim/configs.py
+@@ -324,6 +324,16 @@ class BaseConfig(ArgsConfigTemplate):
+         with open(config_path) as file:
+             wbc_config = yaml.load(file, Loader=yaml.FullLoader)
+ 
++        # LOCAL ADDITION 2026-07-31 (local): let the scene be chosen without
++        # editing the yaml. ROBOT_SCENE is the one field that has to change to
++        # swap rigid hands for actuated ones, there is no CLI arg for it, and
++        # keeping a second near-identical yaml in the tree means two files to
++        # keep in step and one of them silently going stale.
++        # Unset -> the yaml's own value, unchanged.
++        scene_override = os.environ.get("SONIC_ROBOT_SCENE")
++        if scene_override:
++            wbc_config["ROBOT_SCENE"] = scene_override
++
+         wbc_config = override_wbc_config(wbc_config, self)
+ 
+         return wbc_config
+diff --git a/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml b/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml
+index 7eaddda..90483c7 100644
+--- a/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml
++++ b/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml
+@@ -1,6 +1,7 @@
+ # copy from g1_43dof_hist.yaml
+ ROBOT_TYPE: 'g1_29dof' # Robot name, "go2", "b2", "b2w", "h1", "go2w", "g1" 
+-ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_43dof.xml" # Robot scene, for Sim2Sim
++# ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_43dof.xml" # native Dex3 (see .dex3-backup)
++ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_29dof_inspire_rigid.xml" # G1 + rigid Inspire hands
+ # ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_29dof_activated3dex.xml"
+ 
+ DOMAIN_ID: 0 # Domain id
+@@ -149,8 +150,8 @@ WeakMotorJointIndex:
+ 
+ NUM_MOTORS: 29
+ NUM_JOINTS: 29
+-NUM_HAND_MOTORS: 7
+-NUM_HAND_JOINTS: 7
++NUM_HAND_MOTORS: 0  # rigid Inspire hands: no hand actuators (Dex3 used 7)
++NUM_HAND_JOINTS: 0  # rigid Inspire hands: no hand joints (Dex3 used 7)
+ NUM_UPPER_BODY_JOINTS: 17
+ 
+ DEFAULT_DOF_ANGLES: [
+@@ -238,15 +239,15 @@ motor_vel_limit_list: [32.0, 32.0, 32.0, 20.0, 37.0, 37.0,
+                       37.0, 22.0, 22.0,
+                       37.0, 37.0, 37.0, 37.0, 
+                       37.0, 22.0, 22.0]
+-motor_effort_limit_list: [88.0, 88.0, 88.0, 139.0, 50.0, 50.0, 
+-                        88.0, 88.0, 88.0, 139.0, 50.0, 50.0, 
++# 29 BODY effort limits only (rigid Inspire): the two 7-entry Dex3 hand blocks
++# (2.45, 0.7x6) are removed so torque_limit matches the size-29 torque array.
++motor_effort_limit_list: [88.0, 88.0, 88.0, 139.0, 50.0, 50.0,
++                        88.0, 88.0, 88.0, 139.0, 50.0, 50.0,
+                         88.0, 50.0, 50.0,
+-                        25.0, 25.0, 25.0, 25.0, 
++                        25.0, 25.0, 25.0, 25.0,
+                         25.0, 5.0, 5.0,
+-                        2.45, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7,
+-                        25.0, 25.0, 25.0, 25.0, 
+-                        25.0, 5.0, 5.0,
+-                        2.45, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7]
++                        25.0, 25.0, 25.0, 25.0,
++                        25.0, 5.0, 5.0]
+ history_config: {
+                   base_ang_vel: 4,
+                   projected_gravity: 4,
+diff --git a/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml.dex3-backup b/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml.dex3-backup
+new file mode 100644
+index 0000000..7eaddda
+--- /dev/null
++++ b/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml.dex3-backup
+@@ -0,0 +1,419 @@
++# copy from g1_43dof_hist.yaml
++ROBOT_TYPE: 'g1_29dof' # Robot name, "go2", "b2", "b2w", "h1", "go2w", "g1" 
++ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_43dof.xml" # Robot scene, for Sim2Sim
++# ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_29dof_activated3dex.xml"
++
++DOMAIN_ID: 0 # Domain id
++# Network Interface, "lo" for simulation and the one with "192.168.123.222" for real robot
++# INTERFACE: "enxe8ea6a9c4e09"
++# INTERFACE: "enxc8a3623c9cb7"
++INTERFACE: "lo"
++SIMULATOR: "mujoco"  # "robocasa"
++
++USE_JOYSTICK: 0 # Simulate Unitree WirelessController using a gamepad (0: disable, 1: enable)
++JOYSTICK_TYPE: "xbox" # support "xbox" and "switch" gamepad layout
++JOYSTICK_DEVICE: 0 # Joystick number
++
++FREE_BASE: False
++
++PRINT_SCENE_INFORMATION: True # Print link, joint and sensors information of robot
++ENABLE_ELASTIC_BAND: True # Virtual spring band, used for lifting h1
++
++SIMULATE_DT: 0.005  # Need to be larger than the runtime of viewer.sync()
++VIEWER_DT: 0.02  # Viewer update time
++REWARD_DT: 0.02
++USE_SENSOR: False
++USE_HISTORY: True
++USE_HISTORY_LOCO: True
++USE_HISTORY_MIMIC: True
++
++GAIT_PERIOD: 0.9 # 1.25
++
++MOTOR2JOINT: [0, 1, 2, 3, 4, 5,
++              6, 7, 8, 9, 10, 11,
++              12, 13, 14, 
++              15, 16, 17, 18, 19, 20, 21, 
++              22, 23, 24, 25, 26, 27, 28]
++            
++JOINT2MOTOR: [0, 1, 2, 3, 4, 5,
++              6, 7, 8, 9, 10, 11,
++              12, 13, 14, 
++              15, 16, 17, 18, 19, 20, 21, 
++              22, 23, 24, 25, 26, 27, 28]
++            
++
++UNITREE_LEGGED_CONST:
++  HIGHLEVEL: 0xEE
++  LOWLEVEL: 0xFF
++  TRIGERLEVEL: 0xF0
++  PosStopF: 2146000000.0
++  VelStopF: 16000.0
++  MODE_MACHINE: 5
++  MODE_PR:  0
++
++JOINT_KP: [
++    100, 100, 100, 200, 20, 20,
++    100, 100, 100, 200, 20, 20,
++    400, 400, 400,
++    90, 60, 20, 60, 4, 4, 4,
++    90, 60, 20, 60, 4, 4, 4
++]
++
++
++JOINT_KD: [
++   2.5, 2.5, 2.5, 5, 0.2, 0.1,
++   2.5, 2.5, 2.5, 5, 0.2, 0.1,
++   5.0, 5.0, 5.0,
++   2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2,
++    2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2
++]
++
++# arm kp
++# soft kp, safe, test it first
++# 50, 50, 20, 20, 10, 10, 10
++# hard kp, use only if policy is safe
++# 200, 200, 80, 80, 50, 50, 50,
++
++# MOTOR_KP: [
++#     100, 100, 100, 200, 20, 20,
++#     100, 100, 100, 200, 20, 20,
++#     400, 400, 400,
++#     50, 50, 20, 20, 10, 10, 10,
++#     50, 50, 20, 20, 10, 10, 10
++# ]
++
++MOTOR_KP: [
++    150, 150, 150, 200, 40, 40,
++    150, 150, 150, 200, 40, 40, 
++    250, 250, 250,
++    100, 100, 40, 40, 20, 20, 20,
++    100, 100, 40, 40, 20, 20, 20
++]
++
++MOTOR_KD: [
++    2, 2, 2, 4, 2, 2,
++    2, 2, 2, 4, 2, 2,
++    5, 5, 5,
++    5, 5, 2, 2, 2, 2, 2,
++    5, 5, 2, 2, 2, 2, 2
++]
++
++# MOTOR_KP: [
++#     100, 100, 100, 200, 20, 20,
++#     100, 100, 100, 200, 20, 20,
++#     400, 400, 400,
++#     90, 60, 20, 60, 4, 4, 4,
++#     90, 60, 20, 60, 4, 4, 4
++# ]
++
++
++# MOTOR_KD: [
++#    2.5, 2.5, 2.5, 5, 0.2, 0.1,
++#    2.5, 2.5, 2.5, 5, 0.2, 0.1,
++#    5.0, 5.0, 5.0,
++#    2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2,
++#     2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2
++# ]
++
++
++WeakMotorJointIndex:
++  left_hip_yaw_joint: 0
++  left_hip_roll_joint: 1
++  left_hip_pitch_joint: 2
++  left_knee_joint: 3
++  left_ankle_pitch_joint: 4
++  left_ankle_roll_joint: 5
++  right_hip_yaw_joint: 6
++  right_hip_roll_joint: 7
++  right_hip_pitch_joint: 8
++  right_knee_joint: 9
++  right_ankle_pitch_joint: 10
++  right_ankle_roll_joint: 11
++  waist_yaw_joint : 12
++  waist_roll_joint : 13
++  waist_pitch_joint : 14
++  left_shoulder_pitch_joint: 15
++  left_shoulder_roll_joint: 16
++  left_shoulder_yaw_joint: 17
++  left_elbow_joint: 18
++  left_wrist_roll_joint: 19
++  left_wrist_pitch_joint: 20
++  left_wrist_yaw_joint: 21
++  right_shoulder_pitch_joint: 22
++  right_shoulder_roll_joint: 23
++  right_shoulder_yaw_joint: 24
++  right_elbow_joint: 25
++  right_wrist_roll_joint: 26
++  right_wrist_pitch_joint: 27
++  right_wrist_yaw_joint: 28
++
++NUM_MOTORS: 29
++NUM_JOINTS: 29
++NUM_HAND_MOTORS: 7
++NUM_HAND_JOINTS: 7
++NUM_UPPER_BODY_JOINTS: 17
++
++DEFAULT_DOF_ANGLES: [
++    -0.1,  # left_hip_pitch_joint 
++    0.0,  # left_hip_roll_joint
++    0.0,  # left_hip_yaw_joint
++    0.3,  # left_knee_joint
++    -0.2, # left_ankle_pitch_joint
++    0.0,  # left_ankle_roll_joint
++    -0.1, # right_hip_pitch_joint
++    0.0,  # right_hip_roll_joint
++    0.0,  # right_hip_yaw_joint
++    0.3,  # right_knee_joint
++    -0.2, # right_ankle_pitch_joint
++    0.0,  # right_ankle_roll_joint
++    0.0,  # waist_yaw_joint
++    0.0,  # waist_roll_joint
++    0.0,  # waist_pitch_joint
++    0.0,  # left_shoulder_pitch_joint
++    0.0,  # left_shoulder_roll_joint
++    0.0,  # left_shoulder_yaw_joint
++    0.0,  # left_elbow_joint
++    0.0,  # left_wrist_roll_joint
++    0.0,  # left_wrist_pitch_joint
++    0.0,  # left_wrist_yaw_joint
++    0.0,  # right_shoulder_pitch_joint
++    0.0,  # right_shoulder_roll_joint
++    0.0,  # right_shoulder_yaw_joint
++    0.0,  # right_elbow_joint
++    0.0,  # right_wrist_roll_joint
++    0.0,  # right_wrist_pitch_joint
++    0.0   # right_wrist_yaw_joint
++]
++
++DEFAULT_MOTOR_ANGLES: [
++    -0.1,  # left_hip_pitch_joint 
++    0.0,  # left_hip_roll_joint
++    0.0,  # left_hip_yaw_joint
++    0.3,  # left_knee_joint
++    -0.2, # left_ankle_pitch_joint
++    0.0,  # left_ankle_roll_joint
++    -0.1, # right_hip_pitch_joint
++    0.0,  # right_hip_roll_joint
++    0.0,  # right_hip_yaw_joint
++    0.3,  # right_knee_joint
++    -0.2, # right_ankle_pitch_joint
++    0.0,  # right_ankle_roll_joint
++    0.0,  # waist_yaw_joint
++    0.0,  # waist_roll_joint
++    0.0,  # waist_pitch_joint
++    0.0,  # left_shoulder_pitch_joint
++    0.0,  # left_shoulder_roll_joint
++    0.0,  # left_shoulder_yaw_joint
++    0.0,  # left_elbow_joint
++    0.0,  # left_wrist_roll_joint
++    0.0,  # left_wrist_pitch_joint
++    0.0,  # left_wrist_yaw_joint
++    0.0,  # right_shoulder_pitch_joint
++    0.0,  # right_shoulder_roll_joint
++    0.0,  # right_shoulder_yaw_joint
++    0.0,  # right_elbow_joint
++    0.0,  # right_wrist_roll_joint
++    0.0,  # right_wrist_pitch_joint
++    0.0   # right_wrist_yaw_joint
++]
++
++motor_pos_lower_limit_list: [-2.5307, -0.5236, -2.7576, -0.087267, -0.87267, -0.2618, 
++                             -2.5307, -2.9671, -2.7576, -0.087267, -0.87267, -0.2618, 
++                             -2.618, -0.52, -0.52,
++                             -3.0892, -1.5882, -2.618, -1.0472, 
++                             -1.972222054, -1.61443, -1.61443,
++                             -3.0892, -2.2515, -2.618, -1.0472, 
++                             -1.972222054, -1.61443, -1.61443]
++motor_pos_upper_limit_list: [2.8798, 2.9671, 2.7576, 2.8798, 0.5236, 0.2618, 
++                            2.8798, 0.5236, 2.7576, 2.8798, 0.5236, 0.2618, 
++                            2.618, 0.52, 0.52,
++                            2.6704, 2.2515, 2.618, 2.0944, 
++                            1.972222054, 1.61443, 1.61443,
++                            2.6704, 1.5882, 2.618, 2.0944, 
++                            1.972222054, 1.61443, 1.61443]
++motor_vel_limit_list: [32.0, 32.0, 32.0, 20.0, 37.0, 37.0, 
++                      32.0, 32.0, 32.0, 20.0, 37.0, 37.0, 
++                      32.0, 37.0, 37.0, 
++                      37.0, 37.0, 37.0, 37.0, 
++                      37.0, 22.0, 22.0,
++                      37.0, 37.0, 37.0, 37.0, 
++                      37.0, 22.0, 22.0]
++motor_effort_limit_list: [88.0, 88.0, 88.0, 139.0, 50.0, 50.0, 
++                        88.0, 88.0, 88.0, 139.0, 50.0, 50.0, 
++                        88.0, 50.0, 50.0,
++                        25.0, 25.0, 25.0, 25.0, 
++                        25.0, 5.0, 5.0,
++                        2.45, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7,
++                        25.0, 25.0, 25.0, 25.0, 
++                        25.0, 5.0, 5.0,
++                        2.45, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7]
++history_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  command_lin_vel: 4,
++                  command_ang_vel: 4,
++                  command_base_height: 4,
++                  command_stand: 4,
++                  ref_upper_dof_pos: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  # phase_time: 4,
++                  ref_motion_phase: 4,
++                  sin_phase: 4,
++                  cos_phase: 4
++                }
++history_loco_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  command_lin_vel: 4,
++                  command_ang_vel: 4,
++                  # command_base_height: 4,
++                  command_stand: 4,
++                  ref_upper_dof_pos: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  # phase_time: 4,
++                  sin_phase: 4,
++                  cos_phase: 4
++                }
++history_loco_height_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  command_lin_vel: 4,
++                  command_ang_vel: 4,
++                  command_base_height: 4,
++                  command_stand: 4,
++                  ref_upper_dof_pos: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  # phase_time: 4,
++                  sin_phase: 4,
++                  cos_phase: 4
++                }
++history_mimic_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  ref_motion_phase: 4,
++                }
++obs_dims: {
++            base_lin_vel: 3,
++            base_ang_vel: 3,
++            projected_gravity: 3,
++            command_lin_vel: 2,
++            command_ang_vel: 1,
++            command_stand: 1,
++            command_base_height: 1,
++            ref_upper_dof_pos: 17, # upper body actions
++            dof_pos: 29,
++            dof_vel: 29,
++            # actions: 12, # lower body actions
++            actions: 29, # full body actions
++            phase_time: 1,
++            ref_motion_phase: 1, # mimic motion phase
++            sin_phase: 1,
++            cos_phase: 1,
++          }
++obs_loco_dims: {
++            base_lin_vel: 3,
++            base_ang_vel: 3,
++            projected_gravity: 3,
++            command_lin_vel: 2,
++            command_ang_vel: 1,
++            command_stand: 1,
++            command_base_height: 1,
++            ref_upper_dof_pos: 17, # upper body actions
++            dof_pos: 29,
++            dof_vel: 29,
++            actions: 12, # lower body actions
++            phase_time: 1,
++            sin_phase: 1,
++            cos_phase: 1,
++          }
++obs_mimic_dims: {
++            base_lin_vel: 3,
++            base_ang_vel: 3,
++            projected_gravity: 3,
++            dof_pos: 29,
++            dof_vel: 29,
++            actions: 29, # full body actions
++            ref_motion_phase: 1, # mimic motion phase
++          }
++obs_scales: {
++    base_lin_vel: 2.0,
++    base_ang_vel: 0.25,
++    projected_gravity: 1.0,
++    command_lin_vel: 1,
++    command_ang_vel: 1,
++    command_stand: 1,
++    command_base_height: 2, # Yuanhang: it's 2, not 1!
++    ref_upper_dof_pos: 1.0,
++    dof_pos: 1.0,
++    dof_vel: 0.05,
++    history: 1.0,
++    history_loco: 1.0,
++    history_mimic: 1.0,
++    actions: 1.0,
++    phase_time: 1.0,
++    ref_motion_phase: 1.0,
++    sin_phase: 1.0,
++    cos_phase: 1.0
++  }
++
++loco_upper_body_dof_pos: [
++  0.0, 0.0, 0.0, # waist
++  0.0, 0.3, 0.0, 1.0, # left shoulder and elbow
++  0.0, 0.0, 0.0, # left wrist
++  0.0, -0.3, 0.0, 1.0, # right shoulder and elbow
++  0.0, 0.0, 0.0 # right wrist
++]
++
++robot_dofs: {
++  "g1_29dof": [1, 1, 1, 1, 1, 1, 
++               1, 1, 1, 1, 1, 1,
++               1, 1, 1,
++               1, 1, 1, 1, 1, 1, 1,
++               1, 1, 1, 1, 1, 1, 1],
++  "g1_29dof_anneal_23dof": [1, 1, 1, 1, 1, 1, 
++                            1, 1, 1, 1, 1, 1,
++                            1, 1, 1,
++                            1, 1, 1, 1, 0, 0, 0,
++                            1, 1, 1, 1, 0, 0, 0],
++}
++
++mimic_robot_types: {
++
++  "APT_level1": "g1_29dof_anneal_23dof",
++}
++
++
++
++
++# 01281657
++mimic_models: {
++  "APT_level1": "20250116_225127-TairanTestbed_G129dofANNEAL23dof_dm_APT_video_APT_level1_MinimalFriction-0.3_RfiTrue_Far0.325_RESUME_LARGENOISE-motion_tracking-g1_29dof_anneal_23dof/exported/model_176500.onnx",
++  
++}
++
++
++
++start_upper_body_dof_pos: {
++
++  "APT_level1":
++  [0.19964170455932617, 0.07710712403059006, -0.2882401943206787, 
++  0.21672365069389343, 0.15629297494888306, -0.5167576670646667, 0.5782126784324646,
++  0.0, 0.0, 0.0, 
++  0.25740593671798706, -0.2504104673862457, 0.22500675916671753, 0.5127624273300171,
++  0.0, 0.0, 0.0],
++
++}
++
++motion_length_s: {
++  "APT_level1": 7.66,
++
++}
+diff --git a/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml.inspire-rigid b/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml.inspire-rigid
+new file mode 100644
+index 0000000..90483c7
+--- /dev/null
++++ b/gear_sonic/utils/mujoco_sim/wbc_configs/g1_29dof_sonic_model12.yaml.inspire-rigid
+@@ -0,0 +1,420 @@
++# copy from g1_43dof_hist.yaml
++ROBOT_TYPE: 'g1_29dof' # Robot name, "go2", "b2", "b2w", "h1", "go2w", "g1" 
++# ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_43dof.xml" # native Dex3 (see .dex3-backup)
++ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_29dof_inspire_rigid.xml" # G1 + rigid Inspire hands
++# ROBOT_SCENE: "gear_sonic/data/robot_model/model_data/g1/scene_29dof_activated3dex.xml"
++
++DOMAIN_ID: 0 # Domain id
++# Network Interface, "lo" for simulation and the one with "192.168.123.222" for real robot
++# INTERFACE: "enxe8ea6a9c4e09"
++# INTERFACE: "enxc8a3623c9cb7"
++INTERFACE: "lo"
++SIMULATOR: "mujoco"  # "robocasa"
++
++USE_JOYSTICK: 0 # Simulate Unitree WirelessController using a gamepad (0: disable, 1: enable)
++JOYSTICK_TYPE: "xbox" # support "xbox" and "switch" gamepad layout
++JOYSTICK_DEVICE: 0 # Joystick number
++
++FREE_BASE: False
++
++PRINT_SCENE_INFORMATION: True # Print link, joint and sensors information of robot
++ENABLE_ELASTIC_BAND: True # Virtual spring band, used for lifting h1
++
++SIMULATE_DT: 0.005  # Need to be larger than the runtime of viewer.sync()
++VIEWER_DT: 0.02  # Viewer update time
++REWARD_DT: 0.02
++USE_SENSOR: False
++USE_HISTORY: True
++USE_HISTORY_LOCO: True
++USE_HISTORY_MIMIC: True
++
++GAIT_PERIOD: 0.9 # 1.25
++
++MOTOR2JOINT: [0, 1, 2, 3, 4, 5,
++              6, 7, 8, 9, 10, 11,
++              12, 13, 14, 
++              15, 16, 17, 18, 19, 20, 21, 
++              22, 23, 24, 25, 26, 27, 28]
++            
++JOINT2MOTOR: [0, 1, 2, 3, 4, 5,
++              6, 7, 8, 9, 10, 11,
++              12, 13, 14, 
++              15, 16, 17, 18, 19, 20, 21, 
++              22, 23, 24, 25, 26, 27, 28]
++            
++
++UNITREE_LEGGED_CONST:
++  HIGHLEVEL: 0xEE
++  LOWLEVEL: 0xFF
++  TRIGERLEVEL: 0xF0
++  PosStopF: 2146000000.0
++  VelStopF: 16000.0
++  MODE_MACHINE: 5
++  MODE_PR:  0
++
++JOINT_KP: [
++    100, 100, 100, 200, 20, 20,
++    100, 100, 100, 200, 20, 20,
++    400, 400, 400,
++    90, 60, 20, 60, 4, 4, 4,
++    90, 60, 20, 60, 4, 4, 4
++]
++
++
++JOINT_KD: [
++   2.5, 2.5, 2.5, 5, 0.2, 0.1,
++   2.5, 2.5, 2.5, 5, 0.2, 0.1,
++   5.0, 5.0, 5.0,
++   2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2,
++    2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2
++]
++
++# arm kp
++# soft kp, safe, test it first
++# 50, 50, 20, 20, 10, 10, 10
++# hard kp, use only if policy is safe
++# 200, 200, 80, 80, 50, 50, 50,
++
++# MOTOR_KP: [
++#     100, 100, 100, 200, 20, 20,
++#     100, 100, 100, 200, 20, 20,
++#     400, 400, 400,
++#     50, 50, 20, 20, 10, 10, 10,
++#     50, 50, 20, 20, 10, 10, 10
++# ]
++
++MOTOR_KP: [
++    150, 150, 150, 200, 40, 40,
++    150, 150, 150, 200, 40, 40, 
++    250, 250, 250,
++    100, 100, 40, 40, 20, 20, 20,
++    100, 100, 40, 40, 20, 20, 20
++]
++
++MOTOR_KD: [
++    2, 2, 2, 4, 2, 2,
++    2, 2, 2, 4, 2, 2,
++    5, 5, 5,
++    5, 5, 2, 2, 2, 2, 2,
++    5, 5, 2, 2, 2, 2, 2
++]
++
++# MOTOR_KP: [
++#     100, 100, 100, 200, 20, 20,
++#     100, 100, 100, 200, 20, 20,
++#     400, 400, 400,
++#     90, 60, 20, 60, 4, 4, 4,
++#     90, 60, 20, 60, 4, 4, 4
++# ]
++
++
++# MOTOR_KD: [
++#    2.5, 2.5, 2.5, 5, 0.2, 0.1,
++#    2.5, 2.5, 2.5, 5, 0.2, 0.1,
++#    5.0, 5.0, 5.0,
++#    2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2,
++#     2.0, 1.0, 0.4, 1.0, 0.2, 0.2, 0.2
++# ]
++
++
++WeakMotorJointIndex:
++  left_hip_yaw_joint: 0
++  left_hip_roll_joint: 1
++  left_hip_pitch_joint: 2
++  left_knee_joint: 3
++  left_ankle_pitch_joint: 4
++  left_ankle_roll_joint: 5
++  right_hip_yaw_joint: 6
++  right_hip_roll_joint: 7
++  right_hip_pitch_joint: 8
++  right_knee_joint: 9
++  right_ankle_pitch_joint: 10
++  right_ankle_roll_joint: 11
++  waist_yaw_joint : 12
++  waist_roll_joint : 13
++  waist_pitch_joint : 14
++  left_shoulder_pitch_joint: 15
++  left_shoulder_roll_joint: 16
++  left_shoulder_yaw_joint: 17
++  left_elbow_joint: 18
++  left_wrist_roll_joint: 19
++  left_wrist_pitch_joint: 20
++  left_wrist_yaw_joint: 21
++  right_shoulder_pitch_joint: 22
++  right_shoulder_roll_joint: 23
++  right_shoulder_yaw_joint: 24
++  right_elbow_joint: 25
++  right_wrist_roll_joint: 26
++  right_wrist_pitch_joint: 27
++  right_wrist_yaw_joint: 28
++
++NUM_MOTORS: 29
++NUM_JOINTS: 29
++NUM_HAND_MOTORS: 0  # rigid Inspire hands: no hand actuators (Dex3 used 7)
++NUM_HAND_JOINTS: 0  # rigid Inspire hands: no hand joints (Dex3 used 7)
++NUM_UPPER_BODY_JOINTS: 17
++
++DEFAULT_DOF_ANGLES: [
++    -0.1,  # left_hip_pitch_joint 
++    0.0,  # left_hip_roll_joint
++    0.0,  # left_hip_yaw_joint
++    0.3,  # left_knee_joint
++    -0.2, # left_ankle_pitch_joint
++    0.0,  # left_ankle_roll_joint
++    -0.1, # right_hip_pitch_joint
++    0.0,  # right_hip_roll_joint
++    0.0,  # right_hip_yaw_joint
++    0.3,  # right_knee_joint
++    -0.2, # right_ankle_pitch_joint
++    0.0,  # right_ankle_roll_joint
++    0.0,  # waist_yaw_joint
++    0.0,  # waist_roll_joint
++    0.0,  # waist_pitch_joint
++    0.0,  # left_shoulder_pitch_joint
++    0.0,  # left_shoulder_roll_joint
++    0.0,  # left_shoulder_yaw_joint
++    0.0,  # left_elbow_joint
++    0.0,  # left_wrist_roll_joint
++    0.0,  # left_wrist_pitch_joint
++    0.0,  # left_wrist_yaw_joint
++    0.0,  # right_shoulder_pitch_joint
++    0.0,  # right_shoulder_roll_joint
++    0.0,  # right_shoulder_yaw_joint
++    0.0,  # right_elbow_joint
++    0.0,  # right_wrist_roll_joint
++    0.0,  # right_wrist_pitch_joint
++    0.0   # right_wrist_yaw_joint
++]
++
++DEFAULT_MOTOR_ANGLES: [
++    -0.1,  # left_hip_pitch_joint 
++    0.0,  # left_hip_roll_joint
++    0.0,  # left_hip_yaw_joint
++    0.3,  # left_knee_joint
++    -0.2, # left_ankle_pitch_joint
++    0.0,  # left_ankle_roll_joint
++    -0.1, # right_hip_pitch_joint
++    0.0,  # right_hip_roll_joint
++    0.0,  # right_hip_yaw_joint
++    0.3,  # right_knee_joint
++    -0.2, # right_ankle_pitch_joint
++    0.0,  # right_ankle_roll_joint
++    0.0,  # waist_yaw_joint
++    0.0,  # waist_roll_joint
++    0.0,  # waist_pitch_joint
++    0.0,  # left_shoulder_pitch_joint
++    0.0,  # left_shoulder_roll_joint
++    0.0,  # left_shoulder_yaw_joint
++    0.0,  # left_elbow_joint
++    0.0,  # left_wrist_roll_joint
++    0.0,  # left_wrist_pitch_joint
++    0.0,  # left_wrist_yaw_joint
++    0.0,  # right_shoulder_pitch_joint
++    0.0,  # right_shoulder_roll_joint
++    0.0,  # right_shoulder_yaw_joint
++    0.0,  # right_elbow_joint
++    0.0,  # right_wrist_roll_joint
++    0.0,  # right_wrist_pitch_joint
++    0.0   # right_wrist_yaw_joint
++]
++
++motor_pos_lower_limit_list: [-2.5307, -0.5236, -2.7576, -0.087267, -0.87267, -0.2618, 
++                             -2.5307, -2.9671, -2.7576, -0.087267, -0.87267, -0.2618, 
++                             -2.618, -0.52, -0.52,
++                             -3.0892, -1.5882, -2.618, -1.0472, 
++                             -1.972222054, -1.61443, -1.61443,
++                             -3.0892, -2.2515, -2.618, -1.0472, 
++                             -1.972222054, -1.61443, -1.61443]
++motor_pos_upper_limit_list: [2.8798, 2.9671, 2.7576, 2.8798, 0.5236, 0.2618, 
++                            2.8798, 0.5236, 2.7576, 2.8798, 0.5236, 0.2618, 
++                            2.618, 0.52, 0.52,
++                            2.6704, 2.2515, 2.618, 2.0944, 
++                            1.972222054, 1.61443, 1.61443,
++                            2.6704, 1.5882, 2.618, 2.0944, 
++                            1.972222054, 1.61443, 1.61443]
++motor_vel_limit_list: [32.0, 32.0, 32.0, 20.0, 37.0, 37.0, 
++                      32.0, 32.0, 32.0, 20.0, 37.0, 37.0, 
++                      32.0, 37.0, 37.0, 
++                      37.0, 37.0, 37.0, 37.0, 
++                      37.0, 22.0, 22.0,
++                      37.0, 37.0, 37.0, 37.0, 
++                      37.0, 22.0, 22.0]
++# 29 BODY effort limits only (rigid Inspire): the two 7-entry Dex3 hand blocks
++# (2.45, 0.7x6) are removed so torque_limit matches the size-29 torque array.
++motor_effort_limit_list: [88.0, 88.0, 88.0, 139.0, 50.0, 50.0,
++                        88.0, 88.0, 88.0, 139.0, 50.0, 50.0,
++                        88.0, 50.0, 50.0,
++                        25.0, 25.0, 25.0, 25.0,
++                        25.0, 5.0, 5.0,
++                        25.0, 25.0, 25.0, 25.0,
++                        25.0, 5.0, 5.0]
++history_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  command_lin_vel: 4,
++                  command_ang_vel: 4,
++                  command_base_height: 4,
++                  command_stand: 4,
++                  ref_upper_dof_pos: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  # phase_time: 4,
++                  ref_motion_phase: 4,
++                  sin_phase: 4,
++                  cos_phase: 4
++                }
++history_loco_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  command_lin_vel: 4,
++                  command_ang_vel: 4,
++                  # command_base_height: 4,
++                  command_stand: 4,
++                  ref_upper_dof_pos: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  # phase_time: 4,
++                  sin_phase: 4,
++                  cos_phase: 4
++                }
++history_loco_height_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  command_lin_vel: 4,
++                  command_ang_vel: 4,
++                  command_base_height: 4,
++                  command_stand: 4,
++                  ref_upper_dof_pos: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  # phase_time: 4,
++                  sin_phase: 4,
++                  cos_phase: 4
++                }
++history_mimic_config: {
++                  base_ang_vel: 4,
++                  projected_gravity: 4,
++                  dof_pos: 4,
++                  dof_vel: 4,
++                  actions: 4,
++                  ref_motion_phase: 4,
++                }
++obs_dims: {
++            base_lin_vel: 3,
++            base_ang_vel: 3,
++            projected_gravity: 3,
++            command_lin_vel: 2,
++            command_ang_vel: 1,
++            command_stand: 1,
++            command_base_height: 1,
++            ref_upper_dof_pos: 17, # upper body actions
++            dof_pos: 29,
++            dof_vel: 29,
++            # actions: 12, # lower body actions
++            actions: 29, # full body actions
++            phase_time: 1,
++            ref_motion_phase: 1, # mimic motion phase
++            sin_phase: 1,
++            cos_phase: 1,
++          }
++obs_loco_dims: {
++            base_lin_vel: 3,
++            base_ang_vel: 3,
++            projected_gravity: 3,
++            command_lin_vel: 2,
++            command_ang_vel: 1,
++            command_stand: 1,
++            command_base_height: 1,
++            ref_upper_dof_pos: 17, # upper body actions
++            dof_pos: 29,
++            dof_vel: 29,
++            actions: 12, # lower body actions
++            phase_time: 1,
++            sin_phase: 1,
++            cos_phase: 1,
++          }
++obs_mimic_dims: {
++            base_lin_vel: 3,
++            base_ang_vel: 3,
++            projected_gravity: 3,
++            dof_pos: 29,
++            dof_vel: 29,
++            actions: 29, # full body actions
++            ref_motion_phase: 1, # mimic motion phase
++          }
++obs_scales: {
++    base_lin_vel: 2.0,
++    base_ang_vel: 0.25,
++    projected_gravity: 1.0,
++    command_lin_vel: 1,
++    command_ang_vel: 1,
++    command_stand: 1,
++    command_base_height: 2, # Yuanhang: it's 2, not 1!
++    ref_upper_dof_pos: 1.0,
++    dof_pos: 1.0,
++    dof_vel: 0.05,
++    history: 1.0,
++    history_loco: 1.0,
++    history_mimic: 1.0,
++    actions: 1.0,
++    phase_time: 1.0,
++    ref_motion_phase: 1.0,
++    sin_phase: 1.0,
++    cos_phase: 1.0
++  }
++
++loco_upper_body_dof_pos: [
++  0.0, 0.0, 0.0, # waist
++  0.0, 0.3, 0.0, 1.0, # left shoulder and elbow
++  0.0, 0.0, 0.0, # left wrist
++  0.0, -0.3, 0.0, 1.0, # right shoulder and elbow
++  0.0, 0.0, 0.0 # right wrist
++]
++
++robot_dofs: {
++  "g1_29dof": [1, 1, 1, 1, 1, 1, 
++               1, 1, 1, 1, 1, 1,
++               1, 1, 1,
++               1, 1, 1, 1, 1, 1, 1,
++               1, 1, 1, 1, 1, 1, 1],
++  "g1_29dof_anneal_23dof": [1, 1, 1, 1, 1, 1, 
++                            1, 1, 1, 1, 1, 1,
++                            1, 1, 1,
++                            1, 1, 1, 1, 0, 0, 0,
++                            1, 1, 1, 1, 0, 0, 0],
++}
++
++mimic_robot_types: {
++
++  "APT_level1": "g1_29dof_anneal_23dof",
++}
++
++
++
++
++# 01281657
++mimic_models: {
++  "APT_level1": "20250116_225127-TairanTestbed_G129dofANNEAL23dof_dm_APT_video_APT_level1_MinimalFriction-0.3_RfiTrue_Far0.325_RESUME_LARGENOISE-motion_tracking-g1_29dof_anneal_23dof/exported/model_176500.onnx",
++  
++}
++
++
++
++start_upper_body_dof_pos: {
++
++  "APT_level1":
++  [0.19964170455932617, 0.07710712403059006, -0.2882401943206787, 
++  0.21672365069389343, 0.15629297494888306, -0.5167576670646667, 0.5782126784324646,
++  0.0, 0.0, 0.0, 
++  0.25740593671798706, -0.2504104673862457, 0.22500675916671753, 0.5127624273300171,
++  0.0, 0.0, 0.0],
++
++}
++
++motion_length_s: {
++  "APT_level1": 7.66,
++
++}
+diff --git a/gear_sonic_deploy/reference/build_sonic_g1_inspire.py b/gear_sonic_deploy/reference/build_sonic_g1_inspire.py
+new file mode 100644
+index 0000000..890af4b
+--- /dev/null
++++ b/gear_sonic_deploy/reference/build_sonic_g1_inspire.py
+@@ -0,0 +1,153 @@
++#!/usr/bin/env python3
++"""
++Build a SONIC-compatible G1 + Inspire MJCF for run_sim_loop.py.
++
++Strategy (validated safe by base_sim.py + unitree_sdk2py_bridge.py):
++  - SONIC identifies the 29 BODY motors by joint @class (leg/ankle/arm/wrist/
++    torso_motor) and drives NUM_MOTORS(=29). Hands are driven only if
++    NUM_HAND_MOTORS>0. So: keep the 29 body joints/classes/actuators UNTOUCHED,
++    STRIP the Dex3 finger subtrees + their actuators, ATTACH Inspire hands as
++    PASSIVE joints (no @class SONIC recognizes, no actuator). Set
++    NUM_HAND_MOTORS: 0 in the wbc config -> SONIC ignores the Inspire joints
++    entirely. Body-joint mapping is name-derived, so unaffected.
++
++Reuses asymmetric wrist-attach transforms validated in a separate project (L/R Inspire
++URDFs are NOT clean mirrors).
++"""
++import os, sys, shutil, argparse
++import mujoco
++
++SONIC_MODEL = os.environ["WBC_ROOT"] + "/gear_sonic/data/robot_model/model_data/g1/g1_29dof_with_hand.xml"
++INSPIRE_DIR = os.environ["INSPIRE_HAND_ASSETS"]   # xr_teleoperate assets/inspire_hand
++LEFT_URDF  = os.path.join(INSPIRE_DIR, "inspire_hand_left.urdf")
++RIGHT_URDF = os.path.join(INSPIRE_DIR, "inspire_hand_right.urdf")
++
++# Attach poses validated against a separate motion-retargeting project.      
++LEFT_POS  = (0.04,  0.003, 0.0); LEFT_QUAT  = (0.7071068, 0.0, 0.0, 0.7071068)     # +90 Z
++RIGHT_POS = (0.04, -0.003, 0.0); RIGHT_QUAT = (0.0, 0.7071068, -0.7071068, 0.0)    # -90 Z . 180 X
++
++
++def load_inspire_spec(urdf_path):
++    cwd = os.getcwd()
++    try:
++        os.chdir(os.path.dirname(urdf_path))
++        spec = mujoco.MjSpec.from_file(os.path.basename(urdf_path))
++    finally:
++        os.chdir(cwd)
++    mesh_root = os.path.join(os.path.dirname(urdf_path), "meshes")
++    for m in spec.meshes:
++        fname = m.file
++        for pre in ("./meshes/", "meshes/"):
++            if fname.startswith(pre):
++                fname = fname[len(pre):]
++        ab = os.path.abspath(os.path.join(mesh_root, fname))
++        if not os.path.exists(ab):
++            raise FileNotFoundError(f"Inspire mesh missing: {ab}")
++        m.file = ab
++    spec.meshdir = ""
++    return spec
++
++
++def strip_dex3(spec):
++    removed_bodies, removed_acts = [], []
++    # delete Dex3 finger-chain root bodies (their subtrees go with them)
++    for side in ("left", "right"):
++        for finger in ("thumb", "middle", "index"):
++            bname = f"{side}_hand_{finger}_0_link"
++            b = spec.body(bname)
++            if b is not None:
++                removed_bodies.append(bname)
++                spec.delete(b)
++    # delete actuators whose target joint no longer exists (Dex3 finger motors)
++    live_joint_names = {j.name for j in spec.joints}
++    for a in list(spec.actuators):
++        tgt = a.target  # joint name the motor drives
++        if tgt and tgt not in live_joint_names:
++            removed_acts.append(a.name or tgt)
++            spec.delete(a)
++    return removed_bodies, removed_acts
++
++
++def rigidify_inspire(spec):
++    """Delete every Inspire finger JOINT (names 'L_*' / 'R_*') so the finger
++    links weld rigidly to the wrist. This is the ROOT-CAUSE fix for SONIC's
++    'index N out of bounds for size 29' crash: SONIC's sim loop indexes the
++    torque/ctrl array by (model_joint_index - 1) and sizes it to the actuator
++    count, which only holds when EVERY post-root joint is an actuated motor in
++    order. The 24 passive Inspire joints, injected mid-tree at the wrists, shove
++    the right-arm body joints past index 29 and overflow the array. With the
++    finger joints removed, njnt returns to 1 free + 29 body, nu stays 29, and
++    the identity map holds -- SONIC's body control is bit-identical to bare G1,
++    the robot just visibly wears (static) Inspire hands. Body joints are
++    'left_*'/'right_*'/'waist_*', so an 'L_'/'R_' prefix match is exact and
++    never touches a body joint."""
++    removed = []
++    for j in list(spec.joints):
++        if j.name.startswith("L_") or j.name.startswith("R_"):
++            removed.append(j.name)
++            spec.delete(j)
++    return removed
++
++
++def main():
++    ap = argparse.ArgumentParser()
++    ap.add_argument("--out", default=os.environ["WBC_ROOT"] + "/gear_sonic/data/robot_model/model_data/g1/g1_29dof_with_inspire.xml")
++    ap.add_argument("--rigid", action="store_true",
++                    help="Delete Inspire finger joints -> rigid hands (SONIC-safe, 29 body joints only)")
++    args = ap.parse_args()
++
++    # Load SONIC body+Dex3 from its own dir so body meshes resolve.
++    cwd = os.getcwd()
++    try:
++        os.chdir(os.path.dirname(SONIC_MODEL))
++        spec = mujoco.MjSpec.from_file(os.path.basename(SONIC_MODEL))
++    finally:
++        os.chdir(cwd)
++    print(f"[load] {SONIC_MODEL}")
++
++    rb, ra = strip_dex3(spec)
++    print(f"[strip] Dex3 bodies removed: {rb}")
++    print(f"[strip] Dex3 actuators removed ({len(ra)}): {ra}")
++
++    for side, urdf, pos, quat in [("left", LEFT_URDF, LEFT_POS, LEFT_QUAT),
++                                  ("right", RIGHT_URDF, RIGHT_POS, RIGHT_QUAT)]:
++        parent = spec.body(f"{side}_wrist_yaw_link")
++        if parent is None:
++            raise RuntimeError(f"{side}_wrist_yaw_link not found")
++        site = parent.add_site(name=f"{side}_inspire_mount", pos=list(pos), quat=list(quat))
++        hand = load_inspire_spec(urdf)
++        spec.attach(hand, prefix="", site=site)
++        print(f"[attach] Inspire {side} hand at {side}_wrist_yaw_link")
++
++    if args.rigid:
++        rj = rigidify_inspire(spec)
++        print(f"[rigid] deleted {len(rj)} Inspire finger joints -> hands welded rigid to wrists")
++
++    os.chdir(os.path.dirname(SONIC_MODEL))   # body meshes are relative ('meshes/*'); Inspire are absolute
++    model = spec.compile()
++    # report joint inventory
++    njnt = model.njnt
++    body_classes = ("leg_motor","ankle_motor","arm_motor","wrist_motor","torso_motor")
++    print(f"[compile] OK  nq={model.nq} nv={model.nv} njnt={njnt} nu={model.nu} (actuators)")
++    # confirm the 29 body joints still present by name
++    from_29 = ["left_hip_pitch_joint","left_hip_roll_joint","left_hip_yaw_joint","left_knee_joint",
++        "left_ankle_pitch_joint","left_ankle_roll_joint","right_hip_pitch_joint","right_hip_roll_joint",
++        "right_hip_yaw_joint","right_knee_joint","right_ankle_pitch_joint","right_ankle_roll_joint",
++        "waist_yaw_joint","waist_roll_joint","waist_pitch_joint","left_shoulder_pitch_joint",
++        "left_shoulder_roll_joint","left_shoulder_yaw_joint","left_elbow_joint","left_wrist_roll_joint",
++        "left_wrist_pitch_joint","left_wrist_yaw_joint","right_shoulder_pitch_joint","right_shoulder_roll_joint",
++        "right_shoulder_yaw_joint","right_elbow_joint","right_wrist_roll_joint","right_wrist_pitch_joint",
++        "right_wrist_yaw_joint"]
++    missing = [j for j in from_29 if mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, j) == -1]
++    if missing:
++        raise SystemExit(f"[ABORT] body joints lost in build: {missing}")
++    print(f"[verify] all 29 body joints present. actuators nu={model.nu} (expect 29 body motors)")
++
++    spec.compile()
++    xml = spec.to_xml()
++    with open(args.out, "w") as f:
++        f.write(xml)
++    print(f"[write] {args.out}")
++
++if __name__ == "__main__":
++    main()
+diff --git a/gear_sonic_deploy/reference/hand_primitives/hand_primitive_demo.py b/gear_sonic_deploy/reference/hand_primitives/hand_primitive_demo.py
+new file mode 100644
+index 0000000..57114cb
+--- /dev/null
++++ b/gear_sonic_deploy/reference/hand_primitives/hand_primitive_demo.py
+@@ -0,0 +1,216 @@
++#!/usr/bin/env python3
++"""
++Hand-primitive library demo for the G1 + Inspire hands (pure kinematics; no SONIC).
++
++Subcommands
++-----------
++  render   -> labeled montage PNG of every primitive (self-check / proof)
++  vary     -> montage of size x strength variations for one primitive (robustness proof)
++  live     -> open a MuJoCo viewer; the standing G1 cycles both hands through the whole
++              library, interpolating pose-to-pose, with the current primitive named in the
++              terminal. This is the "perform the primitives before my eyes" view.
++
++A primitive is a 6-DOF closure vector [pinky,ring,middle,index,thumb_bend,thumb_yaw] in [0,1];
++map6to12() expands it to the 12 model finger joints per hand using meta.joint_map. Size scales
++the grasp aperture; strength adds grip (force metadata + a little extra curl).
++"""
++import os, sys, json, argparse, time
++import numpy as np
++
++HERE = os.path.dirname(os.path.abspath(__file__))
++GEAR_ROOT = os.environ["WBC_ROOT"]           # GR00T-WholeBodyControl root
++LIB = os.path.join(HERE, "hand_primitives.json")
++
++# ---- G1 upper-body "presentation" pose: bring both hands up in front, palms to camera ----
++BASE_QPOS = [0.0, 0.0, 0.80, 1.0, 0.0, 0.0, 0.0]   # free base: x y z (m) + quat wxyz, standing
++# Arms raised forward + elbows bent so both hands come up in front of the chest, palms to camera.
++PRESENT_POSE = {
++    "left_shoulder_pitch_joint": -1.30, "left_shoulder_roll_joint":  0.22, "left_shoulder_yaw_joint": 0.15,
++    "left_elbow_joint": 1.65, "left_wrist_roll_joint": 0.0, "left_wrist_pitch_joint": -0.30, "left_wrist_yaw_joint": 0.0,
++    "right_shoulder_pitch_joint": -1.30, "right_shoulder_roll_joint": -0.22, "right_shoulder_yaw_joint": -0.15,
++    "right_elbow_joint": 1.65, "right_wrist_roll_joint": 0.0, "right_wrist_pitch_joint": -0.30, "right_wrist_yaw_joint": 0.0,
++    # slight knee/hip bend so it reads as a natural stand, not a mannequin
++    "left_knee_joint": 0.15, "right_knee_joint": 0.15,
++    "left_hip_pitch_joint": -0.08, "right_hip_pitch_joint": -0.08,
++    "left_ankle_pitch_joint": -0.07, "right_ankle_pitch_joint": -0.07,
++}
++
++
++def load_lib():
++    with open(LIB) as f:
++        return json.load(f)
++
++
++def resolve_vec(lib, name, size="medium", strength="firm"):
++    """(name,size,strength) -> concrete 6-DOF closure vector in [0,1]."""
++    p = lib["primitives"][name]
++    vec = list(map(float, p["vec"]))            # [pinky,ring,middle,index,thumb_bend,thumb_yaw]
++    if p["sizeable"]:
++        s = lib["sizes"][size]
++        for i in range(5):                       # scale 4 fingers + thumb_bend; keep thumb_yaw (opposition)
++            vec[i] *= s
++    over = lib["strengths"][strength]["overclose"]
++    for i in range(5):
++        if vec[i] > 1e-6:                        # only tighten fingers already engaged
++            vec[i] = min(1.0, vec[i] + over)
++    return vec
++
++
++def map6to12(lib, vec):
++    """6-DOF closure -> {generic_joint_suffix: angle}. Suffix has no L_/R_ prefix yet."""
++    jm = lib["meta"]["joint_map"]
++    pinky, ring, middle, index, tbend, tyaw = vec
++    out = {}
++    for finger, c in (("pinky", pinky), ("ring", ring), ("middle", middle), ("index", index)):
++        prox_name, prox_hi = jm[finger]["proximal"]
++        inter_name, inter_hi = jm[finger]["intermediate"]
++        out[prox_name] = c * prox_hi
++        out[inter_name] = c * inter_hi
++    # thumb bend chain
++    pitch_name, pitch_hi = jm["thumb_bend"]["pitch"]
++    tinter_name, tinter_hi = jm["thumb_bend"]["intermediate"]
++    dist_name, dist_hi = jm["thumb_bend"]["distal"]
++    out[pitch_name] = tbend * pitch_hi
++    out[tinter_name] = tbend * tinter_hi
++    out[dist_name] = tbend * dist_hi
++    # thumb yaw (opposition) lerps over [lo,hi]
++    yaw_name, yaw_lo, yaw_hi = jm["thumb_yaw"]["yaw"]
++    out[yaw_name] = yaw_lo + tyaw * (yaw_hi - yaw_lo)
++    return out
++
++
++def build_model(lib):
++    import mujoco
++    xml = os.path.join(GEAR_ROOT, lib["meta"]["model"])
++    spec = mujoco.MjSpec.from_file(xml)
++    # add a floor + light for a legible render
++    g = spec.worldbody.add_geom(); g.name = "vfloor"; g.type = mujoco.mjtGeom.mjGEOM_PLANE
++    g.size = [0, 0, 0.05]; g.rgba = [0.55, 0.57, 0.60, 1.0]
++    l = spec.worldbody.add_light(); l.pos = [0.4, 0.4, 2.2]; l.dir = [-0.2, -0.2, -1]
++    spec.visual.global_.offwidth = 900; spec.visual.global_.offheight = 900
++    model = spec.compile()
++    return model
++
++
++def qadr(model, name):
++    return int(model.joint(name).qposadr[0])
++
++
++def apply_pose(model, data, finger_targets_by_side):
++    """Set base + presentation body pose + finger joints (dict suffix->angle per side)."""
++    import mujoco
++    mujoco.mj_resetData(model, data)
++    fb = qadr(model, "floating_base_joint")
++    data.qpos[fb:fb + 7] = BASE_QPOS
++    for jname, val in PRESENT_POSE.items():
++        data.qpos[qadr(model, jname)] = val
++    for side, targets in finger_targets_by_side.items():       # side in {"L_","R_"}
++        for suffix, ang in targets.items():
++            data.qpos[qadr(model, side + suffix)] = ang
++    mujoco.mj_forward(model, data)
++
++
++def both_hands(lib, vec):
++    m = map6to12(lib, vec)
++    return {"L_": m, "R_": m}
++
++
++# ------------------------------------------------------------------ render / vary
++def _render_grid(cells, out, title, cols=4, cam=None):
++    import mujoco
++    import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
++    lib = load_lib(); model = build_model(lib); data = mujoco.MjData(model)
++    renderer = mujoco.Renderer(model, height=900, width=900)
++    c = mujoco.MjvCamera()
++    c.azimuth, c.elevation, c.distance = (cam or (185, -8, 0.72))
++    c.lookat = np.array([0.34, 0.0, 1.02])
++    imgs = []
++    for label, vec in cells:
++        apply_pose(model, data, both_hands(lib, vec))
++        renderer.update_scene(data, camera=c)
++        imgs.append((label, renderer.render().copy()))
++    n = len(imgs); rows = (n + cols - 1) // cols
++    fig, axes = plt.subplots(rows, cols, figsize=(3.1 * cols, 3.3 * rows))
++    axes = np.array(axes).reshape(-1)
++    for ax in axes: ax.axis("off")
++    for ax, (label, im) in zip(axes, imgs):
++        ax.imshow(im); ax.set_title(label, fontsize=11); ax.axis("off")
++    fig.suptitle(title, fontsize=14)
++    fig.tight_layout(); fig.savefig(out, dpi=105, bbox_inches="tight"); print(f"[out] {out}")
++
++
++def cmd_render(args):
++    lib = load_lib()
++    cells = [(name, resolve_vec(lib, name, "medium", "firm")) for name in lib["primitives"]]
++    _render_grid(cells, args.out, "Inspire hand-primitive library  (medium / firm)  |  G1 + Inspire", cols=4)
++
++
++def cmd_vary(args):
++    lib = load_lib()
++    name = args.primitive
++    cells = []
++    for size in ("large", "medium", "small"):
++        for strength in ("light", "firm", "tight"):
++            cells.append((f"{name}\n{size} / {strength}", resolve_vec(lib, name, size, strength)))
++    _render_grid(cells, args.out, f"'{name}'  -  size x strength variations the policy can trial", cols=3)
++
++
++# ------------------------------------------------------------------ live viewer
++def cmd_live(args):
++    import mujoco, mujoco.viewer
++    lib = load_lib(); model = build_model(lib); data = mujoco.MjData(model)
++
++    # sequence: name -> resolved 12-joint targets (per side). include a few variations.
++    seq = []
++    for name in lib["primitives"]:
++        seq.append((f"{name}  (medium/firm)", both_hands(lib, resolve_vec(lib, name, "medium", "firm"))))
++    for size in ("large", "medium", "small"):
++        seq.append((f"power_grasp  ({size}/firm)", both_hands(lib, resolve_vec(lib, "power_grasp", size, "firm"))))
++    for strength in ("light", "firm", "tight"):
++        seq.append((f"power_grasp  (small/{strength})", both_hands(lib, resolve_vec(lib, "power_grasp", "small", strength))))
++
++    apply_pose(model, data, seq[0][1])
++    v = mujoco.viewer.launch_passive(model, data, show_left_ui=False, show_right_ui=False)
++    v.cam.azimuth, v.cam.elevation, v.cam.distance = 188, -6, 1.15
++    v.cam.lookat = np.array([0.26, 0.0, 0.98])
++
++    # capture the finger-joint addresses we animate
++    def targets_to_arr(t):
++        arr = {}
++        for side, m in t.items():
++            for suf, ang in m.items():
++                arr[qadr(model, side + suf)] = ang
++        return arr
++
++    print("\n=== Inspire hand-primitive library — live demo ===")
++    print("Both hands cycle through the library. Close the viewer window to stop.\n")
++    HOLD, MOVE, FPS = 1.1, 0.7, 60.0
++    i = 0
++    cur = targets_to_arr(seq[0][1])
++    while v.is_running():
++        nxt_label, nxt_t = seq[(i + 1) % len(seq)]
++        nxt = targets_to_arr(nxt_t)
++        print(f"  -> {nxt_label}")
++        steps = int(MOVE * FPS)
++        for s in range(steps + 1):
++            if not v.is_running(): break
++            a = s / steps
++            for adr in nxt:
++                start = cur.get(adr, data.qpos[adr])
++                data.qpos[adr] = (1 - a) * start + a * nxt[adr]
++            mujoco.mj_forward(model, data); v.sync(); time.sleep(1.0 / FPS)
++        cur = dict(nxt)
++        t0 = time.time()
++        while time.time() - t0 < HOLD and v.is_running():
++            v.sync(); time.sleep(1.0 / FPS)
++        i = (i + 1) % len(seq)
++    print("[live] viewer closed.")
++
++
++if __name__ == "__main__":
++    ap = argparse.ArgumentParser()
++    sub = ap.add_subparsers(dest="cmd", required=True)
++    r = sub.add_parser("render"); r.add_argument("--out", default=os.path.join(HERE, "primitives_montage.png")); r.set_defaults(fn=cmd_render)
++    va = sub.add_parser("vary"); va.add_argument("--primitive", default="power_grasp"); va.add_argument("--out", default=os.path.join(HERE, "primitives_variations.png")); va.set_defaults(fn=cmd_vary)
++    lv = sub.add_parser("live"); lv.set_defaults(fn=cmd_live)
++    args = ap.parse_args(); args.fn(args)
+diff --git a/gear_sonic_deploy/reference/hand_primitives/hand_primitives.json b/gear_sonic_deploy/reference/hand_primitives/hand_primitives.json
+new file mode 100644
+index 0000000..fb2f587
+--- /dev/null
++++ b/gear_sonic_deploy/reference/hand_primitives/hand_primitives.json
+@@ -0,0 +1,41 @@
++{
++  "meta": {
++    "description": "Inspire RH56 hand-primitive library. A primitive is a 6-DOF closure vector; the player expands it to the 12 model joints per hand. Exposed control axes: primitive (style) x size (grasp aperture) x strength (grip force). A policy trial-and-errors over (name,size,strength) to find the grasp that works for a task.",
++    "dof_order": ["pinky", "ring", "middle", "index", "thumb_bend", "thumb_yaw"],
++    "closure_convention": "each value in [0,1]; 0 = open/extended, 1 = closed/curled. thumb_yaw: 0 = abducted (out to the side), 1 = opposed (across the palm toward the fingers).",
++    "joint_map": {
++      "pinky":      {"proximal": ["pinky_proximal_joint", 1.7], "intermediate": ["pinky_intermediate_joint", 1.7]},
++      "ring":       {"proximal": ["ring_proximal_joint", 1.7],  "intermediate": ["ring_intermediate_joint", 1.7]},
++      "middle":     {"proximal": ["middle_proximal_joint", 1.7],"intermediate": ["middle_intermediate_joint", 1.7]},
++      "index":      {"proximal": ["index_proximal_joint", 1.7], "intermediate": ["index_intermediate_joint", 1.7]},
++      "thumb_bend": {"pitch": ["thumb_proximal_pitch_joint", 0.5], "intermediate": ["thumb_intermediate_joint", 0.8], "distal": ["thumb_distal_joint", 1.2]},
++      "thumb_yaw":  {"yaw": ["thumb_proximal_yaw_joint", -0.1, 1.3]}
++    },
++    "model": "gear_sonic/data/robot_model/model_data/g1/g1_29dof_with_inspire.xml"
++  },
++
++  "sizes": {
++    "_doc": "closure scale for sizeable (graspy) primitives: a LARGE object needs the hand less closed (wraps a fat cylinder), a SMALL object needs it more closed (wraps a thin rod).",
++    "small":  1.00,
++    "medium": 0.78,
++    "large":  0.55
++  },
++
++  "strengths": {
++    "_doc": "force = target grip force for the eventual closed-loop controller (normalized 0..1, ~x30N on real Inspire). overclose = extra finger curl to visually distinguish tightness in the kinematic demo.",
++    "light": {"force": 0.30, "overclose": 0.00},
++    "firm":  {"force": 0.60, "overclose": 0.04},
++    "tight": {"force": 0.90, "overclose": 0.09}
++  },
++
++  "primitives": {
++    "open_hand":       {"style": "open",   "sizeable": false, "vec": [0.00, 0.00, 0.00, 0.00, 0.00, 0.00], "tags": ["release", "reset", "reach"]},
++    "flat_open":       {"style": "flat",   "sizeable": false, "vec": [0.00, 0.00, 0.00, 0.00, 0.05, 0.12], "tags": ["push", "support", "press-flat", "slide-under"]},
++    "power_grasp":     {"style": "power",  "sizeable": true,  "vec": [1.00, 1.00, 1.00, 1.00, 0.70, 0.95], "tags": ["pick", "carry", "cylinder", "bottle", "workhorse"]},
++    "precision_pinch": {"style": "pinch",  "sizeable": true,  "vec": [0.00, 0.00, 0.00, 0.60, 0.55, 1.00], "tags": ["small", "precise", "coin", "cube"]},
++    "tripod":          {"style": "tripod", "sizeable": true,  "vec": [0.00, 0.00, 0.60, 0.60, 0.55, 1.00], "tags": ["medium", "precise", "ball", "knob"]},
++    "lateral_key":     {"style": "key",    "sizeable": true,  "vec": [0.85, 0.85, 0.85, 0.85, 0.30, 0.45], "tags": ["thin", "flat", "card", "key", "plate"]},
++    "hook":            {"style": "hook",   "sizeable": true,  "vec": [1.00, 1.00, 1.00, 1.00, 0.00, 0.00], "tags": ["handle", "carry", "suitcase", "bag"]},
++    "index_point":     {"style": "point",  "sizeable": false, "vec": [1.00, 1.00, 1.00, 0.00, 0.55, 0.75], "tags": ["press", "button", "poke", "point"]}
++  }
++}
+diff --git a/gear_sonic_deploy/reference/hand_primitives/primitives_montage.png b/gear_sonic_deploy/reference/hand_primitives/primitives_montage.png
+new file mode 100644
+index 0000000..33f2cd2
+--- /dev/null
++++ b/gear_sonic_deploy/reference/hand_primitives/primitives_montage.png
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:c7d79c65522e720b34344bed416c2ed55524b090da88b25613548b597eef4f7e
++size 207071
+diff --git a/gear_sonic_deploy/reference/hand_primitives/primitives_variations.png b/gear_sonic_deploy/reference/hand_primitives/primitives_variations.png
+new file mode 100644
+index 0000000..f4aa9f9
+--- /dev/null
++++ b/gear_sonic_deploy/reference/hand_primitives/primitives_variations.png
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:f6ecc832595307dec5ea2a316fd6926cb328ef707a296563bf0fc21ec0e108ec
++size 233717
+diff --git a/gear_sonic_deploy/src/TRTInference/InferenceEngine.cpp b/gear_sonic_deploy/src/TRTInference/InferenceEngine.cpp
+index 1243500..b5a188b 100644
+--- a/gear_sonic_deploy/src/TRTInference/InferenceEngine.cpp
++++ b/gear_sonic_deploy/src/TRTInference/InferenceEngine.cpp
+@@ -174,9 +174,8 @@ bool ConvertONNXToTRT(
+         return false;
+     }
+ 
+-    // Create network
+-    const uint32_t explicitBatch = 1U << static_cast<uint32_t>( nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH );
+-    auto network = std::unique_ptr<nvinfer1::INetworkDefinition>( builder->createNetworkV2( explicitBatch ) );
++    // Create network (explicit batch is the only mode in TRT 10+; kEXPLICIT_BATCH was removed)
++    auto network = std::unique_ptr<nvinfer1::INetworkDefinition>( builder->createNetworkV2( 0 ) );
+     if ( !network )
+     {
+         LOG_ERROR( "Could not create network." );
+@@ -262,9 +261,14 @@ bool ConvertONNXToTRT(
+             }
+             auto &sizes = options.shape_tensor_sizes.at( name );
+ 
+-            profile->setShapeValues( name, nvinfer1::OptProfileSelector::kMIN, std::get<0>( sizes ).data(), std::get<0>( sizes ).size());
+-            profile->setShapeValues( name, nvinfer1::OptProfileSelector::kOPT, std::get<1>( sizes ).data(), std::get<1>( sizes ).size() );
+-            profile->setShapeValues( name, nvinfer1::OptProfileSelector::kMAX, std::get<2>( sizes ).data(), std::get<2>( sizes ).size() );
++            // setShapeValuesV2 (TRT 10+) requires int64_t* — convert from int
++            auto toI64 = [](const std::vector<int>& v) { return std::vector<int64_t>(v.begin(), v.end()); };
++            auto szMin = toI64( std::get<0>( sizes ) );
++            auto szOpt = toI64( std::get<1>( sizes ) );
++            auto szMax = toI64( std::get<2>( sizes ) );
++            profile->setShapeValuesV2( name, nvinfer1::OptProfileSelector::kMIN, szMin.data(), static_cast<int32_t>(szMin.size()) );
++            profile->setShapeValuesV2( name, nvinfer1::OptProfileSelector::kOPT, szOpt.data(), static_cast<int32_t>(szOpt.size()) );
++            profile->setShapeValuesV2( name, nvinfer1::OptProfileSelector::kMAX, szMax.data(), static_cast<int32_t>(szMax.size()) );
+         }
+     }
+ 
+@@ -279,13 +283,8 @@ bool ConvertONNXToTRT(
+     // Set the precision level
+     if ( options.precision == Precision::FP16 )
+     {
+-        // Ensure the GPU supports FP16 inference
+-        if ( !builder->platformHasFastFp16() )
+-        {
+-            LOG_ERROR( "GPU does not support FP16 precision." );
+-            return false;
+-        }
+-        config->setFlag( nvinfer1::BuilderFlag::kFP16 );
++        // BuilderFlag::kFP16 and platformHasFastFp16() were removed in TRT 10+.
++        // TRT 11 selects precision automatically; FP32 fallback is used for simulation.
+     }
+ 
+     // CUDA stream used for profiling by the builder.

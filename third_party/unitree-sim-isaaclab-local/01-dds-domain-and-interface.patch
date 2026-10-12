@@ -1,0 +1,18 @@
+diff --git a/dds/dds_master.py b/dds/dds_master.py
+index 2e500dd..7805572 100644
+--- a/dds/dds_master.py
++++ b/dds/dds_master.py
+@@ -57,7 +57,12 @@ class DDSManager:
+             return True
+         
+         try:
+-            ChannelFactoryInitialize(1)
++            # physicalagent: domain 0 on loopback, to match the
++            # SONIC deploy binary (launched as `g1_deploy_onnx_ref lo`),
++            # UnitreeTelemetry (domain_id=0, interface="lo") and
++            # scripts/sonic_check.py. Upstream used domain 1, so our whole
++            # stack saw ZERO traffic while the sim published happily.
++            ChannelFactoryInitialize(0, "lo")
+             self.dds_initialized = True
+             print("[DDSManager] DDS system initialized")
+             return True

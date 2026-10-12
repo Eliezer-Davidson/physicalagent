@@ -1,0 +1,63 @@
+diff --git a/action_provider/action_provider_wh_dds.py b/action_provider/action_provider_wh_dds.py
+index 3f971a8..016bfc7 100644
+--- a/action_provider/action_provider_wh_dds.py
++++ b/action_provider/action_provider_wh_dds.py
+@@ -31,6 +31,20 @@ class DDSRLActionProvider(ActionProvider):
+         self._gains_applied = False
+         self._fb_refusing = False
+         self._gain_tick = 0
++        # Rendering is for the human watching, not for the control loop, but
++        # the loop pays for it every iteration: this provider calls
++        # env.sim.render() DIRECTLY, so --no_render/--render_interval (which
++        # only gate env.step()) cannot touch it -- measured 2026-08-12,
++        # RTF 0.216 with rendering "disabled" vs 0.216 without the flag.
++        # SONIC_WB_RENDER_EVERY=N renders on 1 iteration in N (N<=1 keeps
++        # vendor behaviour). Cameras refresh only on rendered iterations.
++        try:
++            self._render_every = max(1, int(os.environ.get("SONIC_WB_RENDER_EVERY", "1")))
++        except ValueError:
++            self._render_every = 1
++        self._loop_i = 0
++        self._prof = {"physics": 0.0, "render": 0.0, "obs": 0.0, "n": 0}
++        self._prof_every = 200
+         self.policy_path = f"{project_root}/"+args_cli.model_path
+         self.env = env
+         # Initialize DDS communication
+@@ -510,14 +524,36 @@ class DDSRLActionProvider(ActionProvider):
+                             special_vals = self._inspire_buf.index_select(0, self._inspire_special_source_idx_t) * self._inspire_special_scales_t
+                             full_action.index_copy_(0, self._inspire_special_target_idx_t, special_vals)
+             # 同步仿真多步
++            _t0 = time.perf_counter()
+             for _ in range(4):
+                 self.env.scene["robot"].set_joint_position_target(full_action) 
+                 self.env.scene.write_data_to_sim()                           
+                 self.env.sim.step(render=False)                              
+                 self.env.scene.update(dt=self.env.physics_dt)                    
+ 
+-            self.env.sim.render()
++            _t1 = time.perf_counter()
++            self._loop_i += 1
++            if self._render_every <= 1 or (self._loop_i % self._render_every) == 0:
++                self.env.sim.render()
++            _t2 = time.perf_counter()
+             self.env.observation_manager.compute()
++            _t3 = time.perf_counter()
++            # The vendor's own [Performance] block never reaches disk (it is
++            # printed without flush into a redirected, block-buffered stdout
++            # and lost at os._exit). This one flushes.
++            p = self._prof
++            p["physics"] += _t1 - _t0
++            p["render"] += _t2 - _t1
++            p["obs"] += _t3 - _t2
++            p["n"] += 1
++            if p["n"] >= self._prof_every:
++                n = p["n"]
++                tot = (p["physics"] + p["render"] + p["obs"]) / n
++                print(f"[wb-prof] {n} iters: physics {1e3*p['physics']/n:6.1f} ms | "
++                      f"render {1e3*p['render']/n:6.1f} ms | obs {1e3*p['obs']/n:6.1f} ms | "
++                      f"sum {1e3*tot:6.1f} ms -> {0.020/tot:.3f} RTF ceiling "
++                      f"(render every {self._render_every})", flush=True)
++                p.update({"physics": 0.0, "render": 0.0, "obs": 0.0, "n": 0})
+             
+         except Exception as e:
+             print(f"[{self.name}] Get DDS action failed: {e}")

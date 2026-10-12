@@ -1,0 +1,7 @@
+pub -> sub         msgs  expected  result
+MuJoCo->MuJoCo      384  traffic   as documented
+Isaac ->Isaac       384  traffic   as documented
+Isaac ->MuJoCo        0  silent    as documented
+MuJoCo->Isaac         0  silent    as documented
+
+Same version talks; across the 0.11.0/11.0.1 boundary, nothing does.

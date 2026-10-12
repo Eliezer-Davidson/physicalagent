@@ -1,0 +1,325 @@
+{"kind": "say", "wall": 1786088281.932, "msg": "band already off: pelvis 0.789 m with foot contact"}
+{"kind": "say", "wall": 1786088281.948, "msg": "=== prone trial 1: reset -> induce -> recover_from_fall ==="}
+{"kind": "sample", "wall": 1786088281.955, "label": "standing_check", "t": 5.77, "z": 0.7888, "xy": [-3.625, -2.697], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.057, "label": "standing_check", "t": 5.77, "z": 0.7888, "xy": [-3.625, -2.697], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.16, "label": "standing_check", "t": 5.79, "z": 0.7892, "xy": [-3.623, -2.695], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.264, "label": "standing_check", "t": 5.81, "z": 0.7896, "xy": [-3.618, -2.69], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.368, "label": "standing_check", "t": 5.83, "z": 0.7891, "xy": [-3.615, -2.687], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.472, "label": "standing_check", "t": 5.85, "z": 0.7885, "xy": [-3.618, -2.69], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.575, "label": "standing_check", "t": 5.87, "z": 0.7888, "xy": [-3.62, -2.694], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.676, "label": "standing_check", "t": 5.89, "z": 0.7893, "xy": [-3.619, -2.695], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.784, "label": "standing_check", "t": 5.91, "z": 0.7893, "xy": [-3.614, -2.691], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088282.887, "label": "standing_check", "t": 5.93, "z": 0.7884, "xy": [-3.613, -2.686], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "command", "wall": 1786088282.987, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1786088282.987, "msg": "-> mode idle (speed -1.0, held True)"}
+{"kind": "command", "wall": 1786088284.988, "mode": "kneel_two_legs", "kwargs": {}, "result": {"kind": "mode", "name": "kneel_two_legs", "mode_id": 5, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": 0.4, "tested_on_this_robot": false}}
+{"kind": "say", "wall": 1786088284.988, "msg": "-> mode kneel_two_legs (speed -1.0, held True)"}
+{"kind": "sample", "wall": 1786088284.997, "label": "descend_kneel", "t": 6.29, "z": 0.7892, "xy": [-3.615, -2.697], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.109, "label": "descend_kneel", "t": 6.31, "z": 0.7892, "xy": [-3.615, -2.7], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.22, "label": "descend_kneel", "t": 6.31, "z": 0.7892, "xy": [-3.615, -2.7], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.333, "label": "descend_kneel", "t": 6.35, "z": 0.7895, "xy": [-3.618, -2.693], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.434, "label": "descend_kneel", "t": 6.35, "z": 0.7895, "xy": [-3.618, -2.693], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.538, "label": "descend_kneel", "t": 6.37, "z": 0.7898, "xy": [-3.618, -2.694], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.643, "label": "descend_kneel", "t": 6.39, "z": 0.79, "xy": [-3.617, -2.698], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.753, "label": "descend_kneel", "t": 6.41, "z": 0.79, "xy": [-3.618, -2.7], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.857, "label": "descend_kneel", "t": 6.43, "z": 0.7898, "xy": [-3.62, -2.697], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088285.972, "label": "descend_kneel", "t": 6.45, "z": 0.7896, "xy": [-3.625, -2.692], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.077, "label": "descend_kneel", "t": 6.45, "z": 0.7896, "xy": [-3.625, -2.692], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.182, "label": "descend_kneel", "t": 6.47, "z": 0.7898, "xy": [-3.628, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.288, "label": "descend_kneel", "t": 6.49, "z": 0.7903, "xy": [-3.626, -2.691], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.393, "label": "descend_kneel", "t": 6.51, "z": 0.7906, "xy": [-3.62, -2.693], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.498, "label": "descend_kneel", "t": 6.53, "z": 0.7904, "xy": [-3.613, -2.692], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.601, "label": "descend_kneel", "t": 6.55, "z": 0.7896, "xy": [-3.61, -2.689], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.709, "label": "descend_kneel", "t": 6.57, "z": 0.7881, "xy": [-3.613, -2.688], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.821, "label": "descend_kneel", "t": 6.59, "z": 0.7873, "xy": [-3.619, -2.688], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088286.929, "label": "descend_kneel", "t": 6.61, "z": 0.7864, "xy": [-3.624, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.038, "label": "descend_kneel", "t": 6.63, "z": 0.7871, "xy": [-3.627, -2.69], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.15, "label": "descend_kneel", "t": 6.65, "z": 0.7875, "xy": [-3.626, -2.691], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.252, "label": "descend_kneel", "t": 6.67, "z": 0.7874, "xy": [-3.621, -2.691], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.364, "label": "descend_kneel", "t": 6.67, "z": 0.7874, "xy": [-3.621, -2.691], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.47, "label": "descend_kneel", "t": 6.69, "z": 0.787, "xy": [-3.617, -2.691], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.571, "label": "descend_kneel", "t": 6.71, "z": 0.7862, "xy": [-3.617, -2.691], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.672, "label": "descend_kneel", "t": 6.73, "z": 0.7857, "xy": [-3.619, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.781, "label": "descend_kneel", "t": 6.75, "z": 0.7852, "xy": [-3.622, -2.687], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.891, "label": "descend_kneel", "t": 6.77, "z": 0.7855, "xy": [-3.619, -2.688], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088287.994, "label": "descend_kneel", "t": 6.79, "z": 0.7867, "xy": [-3.614, -2.689], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.095, "label": "descend_kneel", "t": 6.81, "z": 0.7871, "xy": [-3.607, -2.691], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.198, "label": "descend_kneel", "t": 6.83, "z": 0.7859, "xy": [-3.605, -2.691], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.306, "label": "descend_kneel", "t": 6.85, "z": 0.7853, "xy": [-3.607, -2.687], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.415, "label": "descend_kneel", "t": 6.87, "z": 0.7853, "xy": [-3.611, -2.682], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.521, "label": "descend_kneel", "t": 6.89, "z": 0.7855, "xy": [-3.617, -2.678], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.638, "label": "descend_kneel", "t": 6.91, "z": 0.7858, "xy": [-3.62, -2.678], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.759, "label": "descend_kneel", "t": 6.93, "z": 0.786, "xy": [-3.618, -2.68], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.877, "label": "descend_kneel", "t": 6.95, "z": 0.7854, "xy": [-3.613, -2.683], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088288.988, "label": "descend_kneel", "t": 6.97, "z": 0.785, "xy": [-3.606, -2.682], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.092, "label": "descend_kneel", "t": 6.99, "z": 0.7843, "xy": [-3.603, -2.679], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.198, "label": "descend_kneel", "t": 6.99, "z": 0.7843, "xy": [-3.603, -2.679], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.305, "label": "descend_kneel", "t": 7.01, "z": 0.7838, "xy": [-3.605, -2.677], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.409, "label": "descend_kneel", "t": 7.03, "z": 0.784, "xy": [-3.61, -2.678], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.513, "label": "descend_kneel", "t": 7.05, "z": 0.7854, "xy": [-3.617, -2.68], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.623, "label": "descend_kneel", "t": 7.07, "z": 0.7865, "xy": [-3.621, -2.685], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.728, "label": "descend_kneel", "t": 7.09, "z": 0.7861, "xy": [-3.622, -2.688], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.845, "label": "descend_kneel", "t": 7.11, "z": 0.7853, "xy": [-3.621, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088289.959, "label": "descend_kneel", "t": 7.13, "z": 0.7848, "xy": [-3.622, -2.686], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.071, "label": "descend_kneel", "t": 7.15, "z": 0.7854, "xy": [-3.624, -2.683], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.179, "label": "descend_kneel", "t": 7.17, "z": 0.786, "xy": [-3.629, -2.682], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.286, "label": "descend_kneel", "t": 7.19, "z": 0.7868, "xy": [-3.632, -2.682], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.395, "label": "descend_kneel", "t": 7.21, "z": 0.7879, "xy": [-3.632, -2.684], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.504, "label": "descend_kneel", "t": 7.23, "z": 0.7884, "xy": [-3.628, -2.687], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.625, "label": "descend_kneel", "t": 7.25, "z": 0.7874, "xy": [-3.626, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.728, "label": "descend_kneel", "t": 7.27, "z": 0.7872, "xy": [-3.627, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.836, "label": "descend_kneel", "t": 7.29, "z": 0.7875, "xy": [-3.628, -2.688], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088290.941, "label": "descend_kneel", "t": 7.29, "z": 0.7875, "xy": [-3.628, -2.688], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.044, "label": "descend_kneel", "t": 7.31, "z": 0.788, "xy": [-3.63, -2.689], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.149, "label": "descend_kneel", "t": 7.33, "z": 0.7885, "xy": [-3.63, -2.692], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.253, "label": "descend_kneel", "t": 7.35, "z": 0.789, "xy": [-3.626, -2.695], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.358, "label": "descend_kneel", "t": 7.37, "z": 0.7881, "xy": [-3.625, -2.695], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.461, "label": "descend_kneel", "t": 7.39, "z": 0.7865, "xy": [-3.629, -2.692], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.566, "label": "descend_kneel", "t": 7.41, "z": 0.7862, "xy": [-3.633, -2.686], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.673, "label": "descend_kneel", "t": 7.43, "z": 0.7863, "xy": [-3.638, -2.682], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.775, "label": "descend_kneel", "t": 7.45, "z": 0.787, "xy": [-3.639, -2.678], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088291.892, "label": "descend_kneel", "t": 7.47, "z": 0.7874, "xy": [-3.637, -2.678], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.003, "label": "descend_kneel", "t": 7.49, "z": 0.7873, "xy": [-3.632, -2.678], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.106, "label": "descend_kneel", "t": 7.51, "z": 0.7867, "xy": [-3.629, -2.678], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.217, "label": "descend_kneel", "t": 7.53, "z": 0.7857, "xy": [-3.63, -2.677], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.336, "label": "descend_kneel", "t": 7.55, "z": 0.786, "xy": [-3.632, -2.675], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.445, "label": "descend_kneel", "t": 7.57, "z": 0.787, "xy": [-3.635, -2.674], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.56, "label": "descend_kneel", "t": 7.59, "z": 0.7885, "xy": [-3.635, -2.677], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.665, "label": "descend_kneel", "t": 7.61, "z": 0.789, "xy": [-3.632, -2.681], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.77, "label": "descend_kneel", "t": 7.63, "z": 0.7879, "xy": [-3.627, -2.684], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.871, "label": "descend_kneel", "t": 7.63, "z": 0.7879, "xy": [-3.627, -2.684], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088292.973, "label": "descend_kneel", "t": 7.65, "z": 0.7868, "xy": [-3.623, -2.685], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.078, "label": "descend_kneel", "t": 7.67, "z": 0.7856, "xy": [-3.623, -2.681], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.18, "label": "descend_kneel", "t": 7.69, "z": 0.7857, "xy": [-3.627, -2.676], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.286, "label": "descend_kneel", "t": 7.71, "z": 0.7859, "xy": [-3.635, -2.674], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.395, "label": "descend_kneel", "t": 7.73, "z": 0.7866, "xy": [-3.644, -2.674], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.51, "label": "descend_kneel", "t": 7.75, "z": 0.7877, "xy": [-3.648, -2.676], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.626, "label": "descend_kneel", "t": 7.77, "z": 0.7875, "xy": [-3.647, -2.678], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.733, "label": "descend_kneel", "t": 7.79, "z": 0.7865, "xy": [-3.644, -2.679], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.834, "label": "descend_kneel", "t": 7.79, "z": 0.7865, "xy": [-3.644, -2.679], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088293.942, "label": "descend_kneel", "t": 7.81, "z": 0.7854, "xy": [-3.642, -2.678], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.045, "label": "descend_kneel", "t": 7.83, "z": 0.7849, "xy": [-3.642, -2.675], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.149, "label": "descend_kneel", "t": 7.85, "z": 0.7842, "xy": [-3.646, -2.67], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.262, "label": "descend_kneel", "t": 7.87, "z": 0.7836, "xy": [-3.653, -2.667], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.366, "label": "descend_kneel", "t": 7.89, "z": 0.7845, "xy": [-3.656, -2.667], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.467, "label": "descend_kneel", "t": 7.89, "z": 0.7845, "xy": [-3.656, -2.667], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.568, "label": "descend_kneel", "t": 7.91, "z": 0.7859, "xy": [-3.656, -2.671], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.669, "label": "descend_kneel", "t": 7.93, "z": 0.7866, "xy": [-3.654, -2.676], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.775, "label": "descend_kneel", "t": 7.95, "z": 0.7864, "xy": [-3.651, -2.679], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.881, "label": "descend_kneel", "t": 7.97, "z": 0.7858, "xy": [-3.651, -2.679], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088294.983, "label": "descend_kneel", "t": 7.99, "z": 0.7859, "xy": [-3.653, -2.673], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.088, "label": "descend_kneel", "t": 8.01, "z": 0.7862, "xy": [-3.657, -2.669], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.192, "label": "descend_kneel", "t": 8.01, "z": 0.7862, "xy": [-3.657, -2.669], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.296, "label": "descend_kneel", "t": 8.05, "z": 0.7869, "xy": [-3.667, -2.665], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.408, "label": "descend_kneel", "t": 8.07, "z": 0.7876, "xy": [-3.667, -2.668], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.509, "label": "descend_kneel", "t": 8.09, "z": 0.7887, "xy": [-3.662, -2.672], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.626, "label": "descend_kneel", "t": 8.11, "z": 0.7886, "xy": [-3.66, -2.674], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.73, "label": "descend_kneel", "t": 8.11, "z": 0.7886, "xy": [-3.66, -2.674], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.84, "label": "descend_kneel", "t": 8.15, "z": 0.7866, "xy": [-3.665, -2.667], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088295.947, "label": "descend_kneel", "t": 8.15, "z": 0.7866, "xy": [-3.665, -2.667], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.051, "label": "descend_kneel", "t": 8.17, "z": 0.7852, "xy": [-3.671, -2.659], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.156, "label": "descend_kneel", "t": 8.19, "z": 0.7842, "xy": [-3.677, -2.653], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.257, "label": "descend_kneel", "t": 8.21, "z": 0.7839, "xy": [-3.679, -2.651], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.362, "label": "descend_kneel", "t": 8.23, "z": 0.7838, "xy": [-3.678, -2.654], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.467, "label": "descend_kneel", "t": 8.25, "z": 0.785, "xy": [-3.671, -2.658], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.571, "label": "descend_kneel", "t": 8.27, "z": 0.7857, "xy": [-3.665, -2.658], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.68, "label": "descend_kneel", "t": 8.29, "z": 0.7852, "xy": [-3.664, -2.654], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.782, "label": "descend_kneel", "t": 8.31, "z": 0.7839, "xy": [-3.665, -2.647], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088296.893, "label": "descend_kneel", "t": 8.33, "z": 0.7825, "xy": [-3.67, -2.644], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "say", "wall": 1786088296.993, "msg": "kneel descent did not happen within 12 s"}
+{"kind": "command", "wall": 1786088296.993, "mode": "lie_face_down", "kwargs": {}, "result": {"kind": "mode", "name": "lie_face_down", "mode_id": 7, "mode_kind": "ground", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": false}}
+{"kind": "say", "wall": 1786088296.993, "msg": "-> mode lie_face_down (speed -1.0, held True)"}
+{"kind": "sample", "wall": 1786088296.997, "label": "descend_lie", "t": 8.35, "z": 0.7818, "xy": [-3.675, -2.647], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.104, "label": "descend_lie", "t": 8.37, "z": 0.7814, "xy": [-3.675, -2.651], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.215, "label": "descend_lie", "t": 8.39, "z": 0.7827, "xy": [-3.672, -2.656], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.321, "label": "descend_lie", "t": 8.41, "z": 0.7832, "xy": [-3.671, -2.657], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.428, "label": "descend_lie", "t": 8.43, "z": 0.7831, "xy": [-3.672, -2.654], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.538, "label": "descend_lie", "t": 8.45, "z": 0.7829, "xy": [-3.676, -2.65], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.641, "label": "descend_lie", "t": 8.47, "z": 0.7808, "xy": [-3.685, -2.647], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.743, "label": "descend_lie", "t": 8.49, "z": 0.7782, "xy": [-3.696, -2.646], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.853, "label": "descend_lie", "t": 8.51, "z": 0.7772, "xy": [-3.704, -2.647], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088297.96, "label": "descend_lie", "t": 8.51, "z": 0.7772, "xy": [-3.704, -2.647], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.067, "label": "descend_lie", "t": 8.53, "z": 0.7762, "xy": [-3.708, -2.651], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.171, "label": "descend_lie", "t": 8.55, "z": 0.7752, "xy": [-3.711, -2.655], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.276, "label": "descend_lie", "t": 8.57, "z": 0.7744, "xy": [-3.713, -2.659], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.38, "label": "descend_lie", "t": 8.59, "z": 0.7728, "xy": [-3.717, -2.662], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.484, "label": "descend_lie", "t": 8.61, "z": 0.7692, "xy": [-3.723, -2.664], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.585, "label": "descend_lie", "t": 8.63, "z": 0.7665, "xy": [-3.727, -2.663], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.688, "label": "descend_lie", "t": 8.65, "z": 0.7652, "xy": [-3.727, -2.664], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.792, "label": "descend_lie", "t": 8.67, "z": 0.7642, "xy": [-3.723, -2.667], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088298.901, "label": "descend_lie", "t": 8.69, "z": 0.7647, "xy": [-3.719, -2.671], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.003, "label": "descend_lie", "t": 8.71, "z": 0.7651, "xy": [-3.716, -2.678], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.113, "label": "descend_lie", "t": 8.73, "z": 0.7634, "xy": [-3.716, -2.683], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.216, "label": "descend_lie", "t": 8.75, "z": 0.7607, "xy": [-3.719, -2.683], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.324, "label": "descend_lie", "t": 8.77, "z": 0.7591, "xy": [-3.726, -2.68], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.433, "label": "descend_lie", "t": 8.79, "z": 0.756, "xy": [-3.736, -2.677], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.535, "label": "descend_lie", "t": 8.81, "z": 0.7548, "xy": [-3.739, -2.67], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.647, "label": "descend_lie", "t": 8.83, "z": 0.7557, "xy": [-3.742, -2.659], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.754, "label": "descend_lie", "t": 8.85, "z": 0.7549, "xy": [-3.744, -2.65], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.859, "label": "descend_lie", "t": 8.87, "z": 0.7541, "xy": [-3.748, -2.643], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088299.97, "label": "descend_lie", "t": 8.89, "z": 0.7533, "xy": [-3.751, -2.636], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.077, "label": "descend_lie", "t": 8.91, "z": 0.7458, "xy": [-3.758, -2.625], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.191, "label": "descend_lie", "t": 8.93, "z": 0.7324, "xy": [-3.769, -2.608], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.298, "label": "descend_lie", "t": 8.95, "z": 0.7217, "xy": [-3.778, -2.585], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.404, "label": "descend_lie", "t": 8.97, "z": 0.7152, "xy": [-3.787, -2.563], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.511, "label": "descend_lie", "t": 8.97, "z": 0.7152, "xy": [-3.787, -2.563], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.613, "label": "descend_lie", "t": 8.99, "z": 0.7093, "xy": [-3.801, -2.549], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.718, "label": "descend_lie", "t": 9.01, "z": 0.7005, "xy": [-3.82, -2.539], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.823, "label": "descend_lie", "t": 9.03, "z": 0.6895, "xy": [-3.837, -2.531], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088300.925, "label": "descend_lie", "t": 9.05, "z": 0.6786, "xy": [-3.852, -2.525], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.028, "label": "descend_lie", "t": 9.07, "z": 0.6621, "xy": [-3.867, -2.518], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.132, "label": "descend_lie", "t": 9.09, "z": 0.644, "xy": [-3.878, -2.511], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.237, "label": "descend_lie", "t": 9.09, "z": 0.644, "xy": [-3.878, -2.511], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.344, "label": "descend_lie", "t": 9.13, "z": 0.6343, "xy": [-3.896, -2.491], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.45, "label": "descend_lie", "t": 9.15, "z": 0.6391, "xy": [-3.905, -2.48], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.552, "label": "descend_lie", "t": 9.17, "z": 0.6414, "xy": [-3.92, -2.47], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.658, "label": "descend_lie", "t": 9.19, "z": 0.638, "xy": [-3.94, -2.461], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.76, "label": "descend_lie", "t": 9.21, "z": 0.634, "xy": [-3.956, -2.446], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.866, "label": "descend_lie", "t": 9.21, "z": 0.634, "xy": [-3.956, -2.446], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088301.97, "label": "descend_lie", "t": 9.25, "z": 0.6313, "xy": [-3.977, -2.411], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.073, "label": "descend_lie", "t": 9.27, "z": 0.6288, "xy": [-3.991, -2.388], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.181, "label": "descend_lie", "t": 9.27, "z": 0.6288, "xy": [-3.991, -2.388], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.284, "label": "descend_lie", "t": 9.31, "z": 0.6256, "xy": [-4.021, -2.347], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.389, "label": "descend_lie", "t": 9.33, "z": 0.6351, "xy": [-4.033, -2.322], "ground": ["left_ankle_roll_link", "right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.498, "label": "descend_lie", "t": 9.35, "z": 0.6475, "xy": [-4.048, -2.299], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.599, "label": "descend_lie", "t": 9.37, "z": 0.6526, "xy": [-4.067, -2.28], "ground": ["right_ankle_roll_link", "left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.704, "label": "descend_lie", "t": 9.39, "z": 0.6472, "xy": [-4.089, -2.265], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.805, "label": "descend_lie", "t": 9.41, "z": 0.6416, "xy": [-4.112, -2.246], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088302.911, "label": "descend_lie", "t": 9.43, "z": 0.6373, "xy": [-4.134, -2.225], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.012, "label": "descend_lie", "t": 9.43, "z": 0.6373, "xy": [-4.134, -2.225], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.113, "label": "descend_lie", "t": 9.45, "z": 0.6337, "xy": [-4.164, -2.2], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.216, "label": "descend_lie", "t": 9.47, "z": 0.6292, "xy": [-4.192, -2.179], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.321, "label": "descend_lie", "t": 9.49, "z": 0.6226, "xy": [-4.222, -2.161], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.43, "label": "descend_lie", "t": 9.51, "z": 0.6152, "xy": [-4.252, -2.139], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.536, "label": "descend_lie", "t": 9.53, "z": 0.6105, "xy": [-4.279, -2.116], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.652, "label": "descend_lie", "t": 9.55, "z": 0.6096, "xy": [-4.306, -2.095], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.764, "label": "descend_lie", "t": 9.57, "z": 0.6104, "xy": [-4.332, -2.081], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.866, "label": "descend_lie", "t": 9.59, "z": 0.6107, "xy": [-4.359, -2.071], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088303.97, "label": "descend_lie", "t": 9.61, "z": 0.5982, "xy": [-4.39, -2.052], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.089, "label": "descend_lie", "t": 9.63, "z": 0.5768, "xy": [-4.417, -2.024], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.198, "label": "descend_lie", "t": 9.65, "z": 0.5512, "xy": [-4.442, -1.99], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.301, "label": "descend_lie", "t": 9.67, "z": 0.5224, "xy": [-4.475, -1.957], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.406, "label": "descend_lie", "t": 9.67, "z": 0.5224, "xy": [-4.475, -1.957], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.511, "label": "descend_lie", "t": 9.69, "z": 0.4922, "xy": [-4.512, -1.923], "ground": ["right_ankle_pitch_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.619, "label": "descend_lie", "t": 9.71, "z": 0.4668, "xy": [-4.542, -1.886], "ground": ["right_ankle_pitch_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.721, "label": "descend_lie", "t": 9.73, "z": 0.4465, "xy": [-4.559, -1.855], "ground": ["right_ankle_pitch_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.831, "label": "descend_lie", "t": 9.75, "z": 0.4296, "xy": [-4.575, -1.82], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088304.934, "label": "descend_lie", "t": 9.77, "z": 0.4115, "xy": [-4.594, -1.787], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.045, "label": "descend_lie", "t": 9.79, "z": 0.3922, "xy": [-4.619, -1.76], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.149, "label": "descend_lie", "t": 9.79, "z": 0.3922, "xy": [-4.619, -1.76], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.253, "label": "descend_lie", "t": 9.81, "z": 0.3689, "xy": [-4.645, -1.739], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.356, "label": "descend_lie", "t": 9.83, "z": 0.3338, "xy": [-4.678, -1.718], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.466, "label": "descend_lie", "t": 9.85, "z": 0.2912, "xy": [-4.714, -1.696], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.571, "label": "descend_lie", "t": 9.87, "z": 0.2481, "xy": [-4.748, -1.673], "ground": ["left_knee_link", "left_ankle_roll_link"], "nonfoot": ["left_knee_link"]}
+{"kind": "sample", "wall": 1786088305.676, "label": "descend_lie", "t": 9.89, "z": 0.2097, "xy": [-4.784, -1.644], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088305.784, "label": "descend_lie", "t": 9.91, "z": 0.1927, "xy": [-4.817, -1.618], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "say", "wall": 1786088308.791, "msg": "on the floor: pelvis 1.257 m, contacts feet only"}
+{"kind": "screenshot", "wall": 1786088308.807, "path": "$PA_ROOT/artifacts/getup/prone_1_0_down.png"}
+{"kind": "sample", "wall": 1786088349.115, "label": "standing_check", "t": 16.57, "z": 0.1076, "xy": [-2.842, 2.089], "ground": ["left_wrist_pitch_link", "head_link", "left_hand_camera_base_link", "left_ankle_roll_link", "R_ring_intermediate", "R_middle_intermediate"], "nonfoot": ["R_middle_intermediate", "R_ring_intermediate", "head_link", "left_hand_camera_base_link", "left_wrist_pitch_link"]}
+{"kind": "screenshot", "wall": 1786088349.131, "path": "$PA_ROOT/artifacts/getup/prone_1_1_end.png"}
+{"kind": "say", "wall": 1786088349.149, "msg": "prone trial 1: verb says False, body says False"}
+{"kind": "trial", "wall": 1786088349.15, "geometry": "prone", "trial": 1, "latched_before_verb": true, "verb": {"recovered": false, "route": ["lie_face_down:reached", "crawl:timeout", "kneel_two_legs:timeout", "idle:timeout"], "posture": {"height_m": 0.108, "tilt_deg": 80.6, "standing": false, "note": "NOT STANDING \u2014 pelvis 0.11 m, tilt 81 deg. The robot is on the ground. Commanding an ordinary mode will NOT stand it back up, and repeated attempts keep appearing to succeed. recover_from_fall is the only thing that tries, and it reports its own outcome; if it says the robot is not standing, ask the operator to reset it."}, "relatched_during_route": true, "note": "The route ran to the end and the robot is NOT standing. Do not re-run it blindly \u2014 check the stage outcomes: a 'timeout' names the posture the body never reached. NOTE: the fall detector latched again during the route (in mode 'crawl': pelvis 0.09 m is below the 0.26 m floor). Worth reporting \u2014 the guard may be firing on the recovery itself."}, "verb_error": null, "verb_seconds": 40.3, "body_says_standing": false, "agree": true, "down_pelvis_m": 1.257, "end_pelvis_m": 0.108, "displacement_m": 3.5271638748433563, "trial_seconds": 67.2}
+{"kind": "say", "wall": 1786088349.154, "msg": "=== prone trial 2: reset -> induce -> recover_from_fall ==="}
+{"kind": "sample", "wall": 1786088349.16, "label": "standing_check", "t": 16.57, "z": 0.1076, "xy": [-2.842, 2.089], "ground": ["left_wrist_pitch_link", "head_link", "left_hand_camera_base_link", "left_ankle_roll_link", "R_ring_intermediate", "R_middle_intermediate"], "nonfoot": ["R_middle_intermediate", "R_ring_intermediate", "head_link", "left_hand_camera_base_link", "left_wrist_pitch_link"]}
+{"kind": "say", "wall": 1786088349.36, "msg": "sim reset recovery 1/2: rt/reset_pose/cmd '2' (this is the harness, not the robot)"}
+{"kind": "command", "wall": 1786088349.36, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1786088349.36, "msg": "-> mode idle (speed -1.0, held True)"}
+{"kind": "sample", "wall": 1786088349.363, "label": "sim_reset_teleport", "t": 16.61, "z": 0.1108, "xy": [-2.837, 2.102], "ground": ["right_hip_yaw_link", "left_hand_camera_base_link", "R_middle_intermediate", "L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate", "R_middle_intermediate", "left_hand_camera_base_link", "right_hip_yaw_link"]}
+{"kind": "sample", "wall": 1786088349.47, "label": "sim_reset_teleport", "t": 16.63, "z": 0.1115, "xy": [-2.837, 2.103], "ground": ["pelvis_contour_link", "left_hip_pitch_link", "head_link", "left_hand_camera_base_link", "L_pinky_intermediate", "R_middle_intermediate"], "nonfoot": ["L_pinky_intermediate", "R_middle_intermediate", "head_link", "left_hand_camera_base_link", "left_hip_pitch_link", "pelvis_contour_link"]}
+{"kind": "sample", "wall": 1786088349.582, "label": "sim_reset_teleport", "t": 16.63, "z": 0.1115, "xy": [-2.837, 2.103], "ground": ["pelvis_contour_link", "left_hip_pitch_link", "head_link", "left_hand_camera_base_link", "L_pinky_intermediate", "R_middle_intermediate"], "nonfoot": ["L_pinky_intermediate", "R_middle_intermediate", "head_link", "left_hand_camera_base_link", "left_hip_pitch_link", "pelvis_contour_link"]}
+{"kind": "sample", "wall": 1786088349.688, "label": "sim_reset_teleport", "t": 16.67, "z": 0.772, "xy": [-3.907, -2.802], "ground": [], "nonfoot": []}
+{"kind": "command", "wall": 1786088349.688, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1786088349.688, "msg": "-> mode idle (speed -1.0, held True)"}
+{"kind": "sample", "wall": 1786088349.698, "label": "sim_reset_settle", "t": 16.67, "z": 0.772, "xy": [-3.907, -2.802], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088349.802, "label": "sim_reset_settle", "t": 16.69, "z": 0.7438, "xy": [-3.939, -2.784], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088349.907, "label": "sim_reset_settle", "t": 16.71, "z": 0.7126, "xy": [-3.974, -2.78], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.013, "label": "sim_reset_settle", "t": 16.73, "z": 0.6756, "xy": [-4.001, -2.779], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.118, "label": "sim_reset_settle", "t": 16.75, "z": 0.6581, "xy": [-4.019, -2.779], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.247, "label": "sim_reset_settle", "t": 16.77, "z": 0.651, "xy": [-4.023, -2.794], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.356, "label": "sim_reset_settle", "t": 16.79, "z": 0.6379, "xy": [-4.021, -2.815], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.472, "label": "sim_reset_settle", "t": 16.81, "z": 0.6158, "xy": [-4.027, -2.826], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.581, "label": "sim_reset_settle", "t": 16.83, "z": 0.5916, "xy": [-4.037, -2.83], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.693, "label": "sim_reset_settle", "t": 16.83, "z": 0.5916, "xy": [-4.037, -2.83], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.802, "label": "sim_reset_settle", "t": 16.85, "z": 0.5665, "xy": [-4.046, -2.828], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088350.906, "label": "sim_reset_settle", "t": 16.87, "z": 0.5397, "xy": [-4.047, -2.811], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088351.009, "label": "sim_reset_settle", "t": 16.89, "z": 0.5078, "xy": [-4.05, -2.812], "ground": ["right_hand_camera_base_link", "R_thumb_intermediate", "R_thumb_distal", "R_ring_intermediate", "R_middle_intermediate", "R_pinky_intermediate"], "nonfoot": ["R_middle_intermediate", "R_pinky_intermediate", "R_ring_intermediate", "R_thumb_distal", "R_thumb_intermediate", "right_hand_camera_base_link"]}
+{"kind": "sample", "wall": 1786088351.113, "label": "sim_reset_settle", "t": 16.91, "z": 0.4812, "xy": [-4.061, -2.841], "ground": ["left_hand_camera_base_link", "right_wrist_pitch_link", "left_hand_base_link", "L_thumb_proximal", "L_pinky_proximal", "L_ring_proximal", "L_middle_proximal"], "nonfoot": ["L_middle_proximal", "L_pinky_proximal", "L_ring_proximal", "L_thumb_proximal", "left_hand_base_link", "left_hand_camera_base_link", "right_wrist_pitch_link"]}
+{"kind": "sample", "wall": 1786088351.216, "label": "sim_reset_settle", "t": 16.93, "z": 0.47, "xy": [-4.091, -2.893], "ground": ["right_wrist_pitch_link", "left_hand_camera_base_link", "L_middle_proximal", "L_thumb_distal", "L_ring_proximal", "L_thumb_intermediate"], "nonfoot": ["L_middle_proximal", "L_ring_proximal", "L_thumb_distal", "L_thumb_intermediate", "left_hand_camera_base_link", "right_wrist_pitch_link"]}
+{"kind": "sample", "wall": 1786088351.324, "label": "sim_reset_settle", "t": 16.95, "z": 0.4586, "xy": [-4.125, -2.957], "ground": ["left_hand_camera_base_link", "left_hand_base_link", "right_wrist_pitch_link", "L_thumb_proximal", "L_thumb_intermediate", "L_thumb_distal", "L_middle_intermediate", "L_ring_intermediate"], "nonfoot": ["L_middle_intermediate", "L_ring_intermediate", "L_thumb_distal", "L_thumb_intermediate", "L_thumb_proximal", "left_hand_base_link", "left_hand_camera_base_link", "right_wrist_pitch_link"]}
+{"kind": "sample", "wall": 1786088351.428, "label": "sim_reset_settle", "t": 16.95, "z": 0.4586, "xy": [-4.125, -2.957], "ground": ["left_hand_camera_base_link", "left_hand_base_link", "right_wrist_pitch_link", "L_thumb_proximal", "L_thumb_intermediate", "L_thumb_distal", "L_middle_intermediate", "L_ring_intermediate"], "nonfoot": ["L_middle_intermediate", "L_ring_intermediate", "L_thumb_distal", "L_thumb_intermediate", "L_thumb_proximal", "left_hand_base_link", "left_hand_camera_base_link", "right_wrist_pitch_link"]}
+{"kind": "sample", "wall": 1786088351.529, "label": "sim_reset_settle", "t": 16.97, "z": 0.4436, "xy": [-4.155, -3.029], "ground": ["L_thumb_intermediate", "L_thumb_distal", "L_ring_intermediate", "L_middle_intermediate"], "nonfoot": ["L_middle_intermediate", "L_ring_intermediate", "L_thumb_distal", "L_thumb_intermediate"]}
+{"kind": "sample", "wall": 1786088351.63, "label": "sim_reset_settle", "t": 16.99, "z": 0.4221, "xy": [-4.175, -3.105], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088351.733, "label": "sim_reset_settle", "t": 17.01, "z": 0.3936, "xy": [-4.191, -3.19], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088351.843, "label": "sim_reset_settle", "t": 17.03, "z": 0.3592, "xy": [-4.207, -3.287], "ground": ["right_wrist_yaw_link"], "nonfoot": ["right_wrist_yaw_link"]}
+{"kind": "sample", "wall": 1786088351.951, "label": "sim_reset_settle", "t": 17.05, "z": 0.3212, "xy": [-4.225, -3.394], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088352.063, "label": "sim_reset_settle", "t": 17.07, "z": 0.2943, "xy": [-4.247, -3.483], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088352.181, "label": "sim_reset_settle", "t": 17.09, "z": 0.3078, "xy": [-4.282, -3.484], "ground": ["R_ring_intermediate", "R_index_intermediate", "R_middle_intermediate", "R_pinky_intermediate"], "nonfoot": ["R_index_intermediate", "R_middle_intermediate", "R_pinky_intermediate", "R_ring_intermediate"]}
+{"kind": "sample", "wall": 1786088352.286, "label": "sim_reset_settle", "t": 17.09, "z": 0.3078, "xy": [-4.282, -3.484], "ground": ["R_ring_intermediate", "R_index_intermediate", "R_middle_intermediate", "R_pinky_intermediate"], "nonfoot": ["R_index_intermediate", "R_middle_intermediate", "R_pinky_intermediate", "R_ring_intermediate"]}
+{"kind": "sample", "wall": 1786088352.389, "label": "sim_reset_settle", "t": 17.11, "z": 0.3171, "xy": [-4.321, -3.489], "ground": ["right_shoulder_yaw_link"], "nonfoot": ["right_shoulder_yaw_link"]}
+{"kind": "sample", "wall": 1786088352.492, "label": "sim_reset_settle", "t": 17.13, "z": 0.3375, "xy": [-4.345, -3.495], "ground": ["right_knee_link"], "nonfoot": ["right_knee_link"]}
+{"kind": "sample", "wall": 1786088352.597, "label": "sim_reset_settle", "t": 17.15, "z": 0.3635, "xy": [-4.365, -3.498], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088352.702, "label": "sim_reset_settle", "t": 17.17, "z": 0.3899, "xy": [-4.39, -3.497], "ground": ["left_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088352.815, "label": "sim_reset_settle", "t": 17.19, "z": 0.4137, "xy": [-4.417, -3.496], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088352.919, "label": "sim_reset_settle", "t": 17.21, "z": 0.4286, "xy": [-4.444, -3.499], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.026, "label": "sim_reset_settle", "t": 17.21, "z": 0.4286, "xy": [-4.444, -3.499], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.13, "label": "sim_reset_settle", "t": 17.23, "z": 0.4416, "xy": [-4.472, -3.499], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.239, "label": "sim_reset_settle", "t": 17.25, "z": 0.4548, "xy": [-4.499, -3.498], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.342, "label": "sim_reset_settle", "t": 17.27, "z": 0.4641, "xy": [-4.523, -3.498], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.451, "label": "sim_reset_settle", "t": 17.29, "z": 0.4644, "xy": [-4.543, -3.499], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.558, "label": "sim_reset_settle", "t": 17.31, "z": 0.4614, "xy": [-4.562, -3.501], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.659, "label": "sim_reset_settle", "t": 17.33, "z": 0.4515, "xy": [-4.583, -3.502], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.762, "label": "sim_reset_settle", "t": 17.35, "z": 0.4334, "xy": [-4.605, -3.503], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.874, "label": "sim_reset_settle", "t": 17.37, "z": 0.4105, "xy": [-4.627, -3.503], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088353.988, "label": "sim_reset_settle", "t": 17.37, "z": 0.4105, "xy": [-4.627, -3.503], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.096, "label": "sim_reset_settle", "t": 17.41, "z": 0.3653, "xy": [-4.68, -3.5], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.199, "label": "sim_reset_settle", "t": 17.41, "z": 0.3653, "xy": [-4.68, -3.5], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.306, "label": "sim_reset_settle", "t": 17.43, "z": 0.3473, "xy": [-4.706, -3.503], "ground": ["R_pinky_proximal", "R_pinky_intermediate"], "nonfoot": ["R_pinky_intermediate", "R_pinky_proximal"]}
+{"kind": "sample", "wall": 1786088354.41, "label": "sim_reset_settle", "t": 17.45, "z": 0.3346, "xy": [-4.732, -3.51], "ground": ["right_hand_camera_base_link"], "nonfoot": ["right_hand_camera_base_link"]}
+{"kind": "sample", "wall": 1786088354.512, "label": "sim_reset_settle", "t": 17.47, "z": 0.3134, "xy": [-4.752, -3.52], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.619, "label": "sim_reset_settle", "t": 17.49, "z": 0.2804, "xy": [-4.766, -3.531], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.722, "label": "sim_reset_settle", "t": 17.51, "z": 0.2515, "xy": [-4.779, -3.545], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.832, "label": "sim_reset_settle", "t": 17.53, "z": 0.2244, "xy": [-4.797, -3.561], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088354.942, "label": "sim_reset_settle", "t": 17.55, "z": 0.1949, "xy": [-4.815, -3.58], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.056, "label": "sim_reset_settle", "t": 17.57, "z": 0.1762, "xy": [-4.837, -3.596], "ground": ["right_hip_yaw_link"], "nonfoot": ["right_hip_yaw_link"]}
+{"kind": "sample", "wall": 1786088355.173, "label": "sim_reset_settle", "t": 17.59, "z": 0.1582, "xy": [-4.857, -3.611], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.287, "label": "sim_reset_settle", "t": 17.59, "z": 0.1582, "xy": [-4.857, -3.611], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.388, "label": "sim_reset_settle", "t": 17.61, "z": 0.1499, "xy": [-4.872, -3.62], "ground": ["right_hip_pitch_link"], "nonfoot": ["right_hip_pitch_link"]}
+{"kind": "sample", "wall": 1786088355.492, "label": "sim_reset_settle", "t": 17.63, "z": 0.1455, "xy": [-4.883, -3.628], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.612, "label": "sim_reset_settle", "t": 17.65, "z": 0.1454, "xy": [-4.897, -3.63], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.743, "label": "sim_reset_settle", "t": 17.67, "z": 0.1449, "xy": [-4.907, -3.63], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.86, "label": "sim_reset_settle", "t": 17.69, "z": 0.1398, "xy": [-4.912, -3.632], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088355.976, "label": "sim_reset_settle", "t": 17.71, "z": 0.1372, "xy": [-4.925, -3.63], "ground": ["L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate"]}
+{"kind": "sample", "wall": 1786088356.083, "label": "sim_reset_settle", "t": 17.71, "z": 0.1372, "xy": [-4.925, -3.63], "ground": ["L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate"]}
+{"kind": "sample", "wall": 1786088356.185, "label": "sim_reset_settle", "t": 17.73, "z": 0.1386, "xy": [-4.934, -3.63], "ground": ["left_hip_pitch_link"], "nonfoot": ["left_hip_pitch_link"]}
+{"kind": "sample", "wall": 1786088356.291, "label": "sim_reset_settle", "t": 17.75, "z": 0.1422, "xy": [-4.941, -3.631], "ground": ["left_hip_pitch_link"], "nonfoot": ["left_hip_pitch_link"]}
+{"kind": "sample", "wall": 1786088356.392, "label": "sim_reset_settle", "t": 17.77, "z": 0.1494, "xy": [-4.949, -3.633], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088356.496, "label": "sim_reset_settle", "t": 17.79, "z": 0.1514, "xy": [-4.953, -3.636], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088356.599, "label": "sim_reset_settle", "t": 17.81, "z": 0.1543, "xy": [-4.961, -3.637], "ground": ["left_hip_pitch_link"], "nonfoot": ["left_hip_pitch_link"]}
+{"kind": "sample", "wall": 1786088356.703, "label": "sim_reset_settle", "t": 17.83, "z": 0.1525, "xy": [-4.969, -3.637], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088356.811, "label": "sim_reset_settle", "t": 17.83, "z": 0.1525, "xy": [-4.969, -3.637], "ground": [], "nonfoot": []}
+{"kind": "sample", "wall": 1786088356.916, "label": "sim_reset_settle", "t": 17.85, "z": 0.1541, "xy": [-4.976, -3.642], "ground": ["left_hip_pitch_link", "L_pinky_proximal", "L_pinky_intermediate", "L_ring_intermediate"], "nonfoot": ["L_pinky_intermediate", "L_pinky_proximal", "L_ring_intermediate", "left_hip_pitch_link"]}
+{"kind": "sample", "wall": 1786088357.022, "label": "sim_reset_settle", "t": 17.87, "z": 0.1599, "xy": [-4.976, -3.652], "ground": ["L_pinky_intermediate", "L_pinky_proximal"], "nonfoot": ["L_pinky_intermediate", "L_pinky_proximal"]}
+{"kind": "sample", "wall": 1786088357.125, "label": "sim_reset_settle", "t": 17.89, "z": 0.1739, "xy": [-4.965, -3.66], "ground": ["left_elbow_link"], "nonfoot": ["left_elbow_link"]}
+{"kind": "sample", "wall": 1786088357.236, "label": "sim_reset_settle", "t": 17.91, "z": 0.182, "xy": [-4.955, -3.658], "ground": ["L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate"]}
+{"kind": "sample", "wall": 1786088357.34, "label": "sim_reset_settle", "t": 17.91, "z": 0.182, "xy": [-4.955, -3.658], "ground": ["L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate"]}
+{"kind": "sample", "wall": 1786088357.442, "label": "sim_reset_settle", "t": 17.93, "z": 0.1765, "xy": [-4.95, -3.645], "ground": ["left_hand_camera_base_link", "left_elbow_link"], "nonfoot": ["left_elbow_link", "left_hand_camera_base_link"]}
+{"kind": "sample", "wall": 1786088357.551, "label": "sim_reset_settle", "t": 17.95, "z": 0.1684, "xy": [-4.947, -3.635], "ground": ["left_elbow_link", "L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate", "left_elbow_link"]}
+{"kind": "sample", "wall": 1786088357.662, "label": "sim_reset_settle", "t": 17.95, "z": 0.1684, "xy": [-4.947, -3.635], "ground": ["left_elbow_link", "L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate", "left_elbow_link"]}
+{"kind": "sample", "wall": 1786088357.764, "label": "standing_check", "t": 17.97, "z": 0.154, "xy": [-4.947, -3.625], "ground": ["left_hand_camera_base_link"], "nonfoot": ["left_hand_camera_base_link"]}
+{"kind": "say", "wall": 1786088357.764, "msg": "sim reset recovery -> NOT standing"}
+{"kind": "say", "wall": 1786088357.764, "msg": "sim reset recovery 2/2: rt/reset_pose/cmd '2' (this is the harness, not the robot)"}
+{"kind": "command", "wall": 1786088357.764, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1786088357.764, "msg": "-> mode idle (speed -1.0, held True)"}
+{"kind": "sample", "wall": 1786088357.769, "label": "sim_reset_teleport", "t": 17.97, "z": 0.154, "xy": [-4.947, -3.625], "ground": ["left_hand_camera_base_link"], "nonfoot": ["left_hand_camera_base_link"]}
+{"kind": "sample", "wall": 1786088357.871, "label": "sim_reset_teleport", "t": 17.99, "z": 0.1391, "xy": [-4.95, -3.623], "ground": ["right_shoulder_yaw_link", "left_hand_camera_base_link", "left_elbow_link", "right_wrist_pitch_link", "L_pinky_intermediate"], "nonfoot": ["L_pinky_intermediate", "left_elbow_link", "left_hand_camera_base_link", "right_shoulder_yaw_link", "right_wrist_pitch_link"]}
+{"kind": "sample", "wall": 1786088357.982, "label": "sim_reset_teleport", "t": 18.01, "z": 0.7919, "xy": [-3.889, -2.814], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "command", "wall": 1786088357.982, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1786088357.982, "msg": "-> mode idle (speed -1.0, held True)"}
+{"kind": "sample", "wall": 1786088357.988, "label": "sim_reset_settle", "t": 18.01, "z": 0.7919, "xy": [-3.889, -2.814], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088357.993, "label": "standing_check", "t": 18.01, "z": 0.7919, "xy": [-3.889, -2.814], "ground": ["right_ankle_roll_link"], "nonfoot": []}
+{"kind": "sample", "wall": 1786088358.095, "label": "standing_check", "t": 18.03, "z": 0.7726, "xy": [-3.905, -2.801], "ground": [], "nonfoot": []}
+{"kind": "say", "wall": 1786088358.095, "msg": "sim reset recovery -> NOT standing"}
+{"kind": "say", "wall": 1786088358.095, "msg": "STOPPING prone after 2/10: could not reset the robot to standing; the band recovery failed. Restart the simulator to continue."}
+{"kind": "command", "wall": 1786088358.095, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1786088358.095, "msg": "-> mode idle (speed -1.0, held True)"}
+{"kind": "summary", "wall": 1786088358.095, "results": [{"geometry": "prone", "asked": 10, "attempted": 2, "scored": 1, "stood_up": 0, "rate": "0/1", "truncated": "could not reset the robot to standing; the band recovery failed. Restart the simulator to continue.", "aborts": ["no standing start"], "disagreements": [], "trials": [{"geometry": "prone", "trial": 1, "latched_before_verb": true, "verb": {"recovered": false, "route": ["lie_face_down:reached", "crawl:timeout", "kneel_two_legs:timeout", "idle:timeout"], "posture": {"height_m": 0.108, "tilt_deg": 80.6, "standing": false, "note": "NOT STANDING \u2014 pelvis 0.11 m, tilt 81 deg. The robot is on the ground. Commanding an ordinary mode will NOT stand it back up, and repeated attempts keep appearing to succeed. recover_from_fall is the only thing that tries, and it reports its own outcome; if it says the robot is not standing, ask the operator to reset it."}, "relatched_during_route": true, "note": "The route ran to the end and the robot is NOT standing. Do not re-run it blindly \u2014 check the stage outcomes: a 'timeout' names the posture the body never reached. NOTE: the fall detector latched again during the route (in mode 'crawl': pelvis 0.09 m is below the 0.26 m floor). Worth reporting \u2014 the guard may be firing on the recovery itself."}, "verb_error": null, "verb_seconds": 40.3, "body_says_standing": false, "agree": true, "down_pelvis_m": 1.257, "end_pelvis_m": 0.108, "displacement_m": 3.5271638748433563, "trial_seconds": 67.2}, {"geometry": "prone", "trial": 2, "aborted": "no standing start"}]}]}
