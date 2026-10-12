@@ -1,0 +1,51 @@
+[1/4] MuJoCo simulator (windowed, hands=rigid) -> $PA_ROOT/artifacts/live/sim.log
+[2/4] SONIC policy -> $PA_ROOT/artifacts/live/policy.log   (TensorRT load, ~35 s)
+[3/4] policy ready -- handing over to scripts/getup_probe.py
+[4/4] it will send start, release the band, then take over
+
+[getup] publisher bound on tcp://*:5556
+[getup] planner parked in IDLE
+[getup] pelvis 0.967 m, contacts NONE -- still ON THE BAND; lowering deterministically
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band bring-down -> standing
+[getup] baseline_idle: pelvis 0.787 -> 0.787 m (min 0.787, max 0.787)
+[getup] === ATTEMPT ladder: kneel_two_legs -> idle ===
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] -> mode lie_face_down (speed -1.0, held True)
+[getup] on the floor: pelvis 0.154 m, contacts R_hand_base_link, left_hip_yaw_link, left_wrist_pitch_link, right_hip_roll_link, right_shoulder_yaw_link
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] ladder:kneel_two_legs: pelvis 0.152 -> 0.416 m (min 0.152, max 0.416), non-foot contact: L_hand_base_link, L_pinky_intermediate, R_hand_base_link, R_pinky_intermediate
+[getup] -> mode idle (speed -1.0, held True)
+[getup] ladder:idle: pelvis 0.416 -> 0.786 m (min 0.411, max 0.803), non-foot contact: left_knee_link, right_knee_link
+[getup] ATTEMPT ladder: STOOD UP
+[getup] === ATTEMPT direct: idle ===
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] -> mode lie_face_down (speed -1.0, held True)
+[getup] on the floor: pelvis 0.153 m, contacts R_hand_base_link, left_hip_yaw_link, left_wrist_pitch_link, right_hip_roll_link, right_shoulder_yaw_link
+[getup] -> mode idle (speed -1.0, held True)
+[getup] direct:idle: pelvis 0.151 -> 0.078 m (min 0.068, max 0.550), non-foot contact: L_index_intermediate, L_middle_intermediate, L_pinky_intermediate, L_ring_intermediate
+[getup] ATTEMPT direct: did NOT stand up
+[getup] === ATTEMPT crawl_route: crawl -> kneel_two_legs -> idle ===
+[getup] band recovery: hoisting (this is the harness, not the robot)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band engage refused/failed: {'ok': False, 'band_enabled': False, 'error': 'robot is 1.99 m from the band anchor at the origin; engaging would catapult it (kp=10000). Restart the simulator instead.', 'sim_time_s': 112.74}
+[getup] === REAL FALL: crawl -> elbow_crawl transition ===
+[getup] band recovery: hoisting (this is the harness, not the robot)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band engage refused/failed: {'ok': False, 'band_enabled': False, 'error': 'robot is 1.99 m from the band anchor at the origin; engaging would catapult it (kp=10000). Restart the simulator instead.', 'sim_time_s': 112.75}
+[getup] === JUMP: does jump_forward ever leave the floor? ===
+[getup] band recovery: hoisting (this is the harness, not the robot)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band engage refused/failed: {'ok': False, 'band_enabled': False, 'error': 'robot is 1.99 m from the band anchor at the origin; engaging would catapult it (kp=10000). Restart the simulator instead.', 'sim_time_s': 112.76}
+[getup] -> mode idle (speed -1.0, held True)
+
+[getup] SUMMARY
+  {"attempt": "ladder", "stages": [{"label": "ladder:kneel_two_legs", "z_start": 0.152, "z_end": 0.416, "z_max": 0.416, "z_min": 0.152, "nonfoot_contacts": ["L_hand_base_link", "L_pinky_intermediate", "R_hand_base_link", "R_pinky_intermediate", "R_ring_intermediate", "left_hip_yaw_link", "left_knee_link", "left_wrist_pitch_link", "left_wrist_yaw_link", "right_hip_yaw_link", "right_knee_link", "right
+  {"attempt": "direct", "stages": [{"label": "direct:idle", "z_start": 0.151, "z_end": 0.078, "z_max": 0.55, "z_min": 0.068, "nonfoot_contacts": ["L_index_intermediate", "L_middle_intermediate", "L_pinky_intermediate", "L_ring_intermediate", "L_thumb_distal", "L_thumb_intermediate", "L_thumb_proximal", "R_hand_base_link", "R_pinky_intermediate", "R_ring_intermediate", "left_hip_yaw_link", "left_wris
+  {"attempt": "crawl_route", "aborted": "could not reach standing to start"}
+  {"attempt": "real_fall", "aborted": "could not reach standing"}
+  {"attempt": "jump", "aborted": "could not reach standing"}
+
+[live] shutting down

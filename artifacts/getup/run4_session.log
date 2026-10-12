@@ -1,0 +1,31 @@
+[1/4] MuJoCo simulator (windowed, hands=rigid) -> $PA_ROOT/artifacts/live/sim.log
+[2/4] SONIC policy -> $PA_ROOT/artifacts/live/policy.log   (TensorRT load, ~35 s)
+[3/4] policy ready -- handing over to scripts/getup_probe.py
+[4/4] it will send start, release the band, then take over
+
+[getup] publisher bound on tcp://*:5556
+[getup] planner parked in IDLE
+[getup] pelvis 0.968 m, contacts NONE -- still ON THE BAND; lowering deterministically
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band bring-down -> standing
+[getup] baseline_idle: pelvis 0.786 -> 0.786 m (min 0.786, max 0.786)
+[getup] === REAL FALL: crawl -> elbow_crawl transition (vendor speeds) ===
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] -> mode crawl (speed 0.7, held True)
+[getup] -> mode elbow_crawl (speed 0.7, held True)
+[getup] FELL for real: pelvis 0.225 m, contacts left_knee_link, left_wrist_pitch_link, right_elbow_link, right_knee_link, right_shoulder_yaw_link
+[getup] -> mode lie_face_down (speed -1.0, held True)
+[getup] realfall:lie_face_down: pelvis 0.223 -> 0.151 m (min 0.150, max 0.223), non-foot contact: R_hand_base_link, left_elbow_link, left_hip_yaw_link, left_wrist_pitch_link
+[getup] -> mode crawl (speed 0.0, held True)
+[getup] realfall:crawl: pelvis 0.151 -> 0.431 m (min 0.149, max 0.454), non-foot contact: L_index_intermediate, L_middle_intermediate, L_pinky_intermediate, L_ring_intermediate
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] realfall:kneel_two_legs: pelvis 0.440 -> 0.410 m (min 0.407, max 0.450), non-foot contact: L_middle_intermediate, L_pinky_intermediate, L_ring_intermediate, R_index_intermediate
+[getup] -> mode idle (speed -1.0, held True)
+[getup] realfall:idle: pelvis 0.410 -> 0.787 m (min 0.410, max 0.818), non-foot contact: left_knee_link, right_knee_link
+[getup] REAL-FALL recovery: STOOD UP
+[getup] -> mode idle (speed -1.0, held True)
+
+[getup] SUMMARY
+  {"attempt": "real_fall", "induced": true, "stages": [{"label": "realfall:lie_face_down", "z_start": 0.223, "z_end": 0.151, "z_max": 0.223, "z_min": 0.15, "nonfoot_contacts": ["R_hand_base_link", "left_elbow_link", "left_hip_yaw_link", "left_wrist_pitch_link", "right_elbow_link", "right_hip_roll_link", "right_shoulder_yaw_link", "right_wrist_pitch_link", "right_wrist_yaw_link"]}, {"label": "realfal
+
+[live] shutting down

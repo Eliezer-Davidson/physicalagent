@@ -1,0 +1,29 @@
+{"kind": "say", "wall": 1787029798.789, "msg": "publisher bound on tcp://*:5556"}
+{"kind": "say", "wall": 1787029800.803, "msg": "planner parked in IDLE"}
+{"kind": "say", "wall": 1787029800.807, "msg": "backend: isaac"}
+{"kind": "say", "wall": 1787029800.807, "msg": "phase A: quiet stand, 10 s (jitter + RTF baseline)"}
+{"kind": "phase", "wall": 1787029810.959, "label": "stand", "seconds": 10.13, "cmd_msgs": 2010, "state_msgs": 809, "cmd_hz": 198.4, "state_hz": 79.9, "rtf": 0.296, "leg_speed_rms_rad_s": 5.3424, "pelvis_std_m": 0.1626, "joints": {"left_hip_pitch": {"cmd_sweep_rad": 3.685, "n": 808, "corr": 0.539, "rms_rad": 0.641}, "left_knee": {"cmd_sweep_rad": 3.688, "n": 808, "corr": 0.26, "rms_rad": 0.788}, "left_ankle_pitch": {"cmd_sweep_rad": 1.741, "n": 808, "corr": 0.178, "rms_rad": 0.277}, "right_knee": {"cmd_sweep_rad": 3.987, "n": 808, "corr": 0.427, "rms_rad": 0.665}, "left_shoulder_pitch": {"cmd_sweep_rad": 5.839, "n": 808, "corr": 0.018, "rms_rad": 1.145}}}
+{"kind": "say", "wall": 1787029810.96, "msg": "stand: cmd 198.4 Hz, state 79.9 Hz, RTF 0.296, leg speed RMS 5.3424 rad/s, pelvis std 0.1626 m"}
+{"kind": "camera_frame", "wall": 1787029810.972, "path": "$PA_ROOT/artifacts/tracking/stand.jpg", "bytes": 19093}
+{"kind": "say", "wall": 1787029810.972, "msg": "phase B: kneel_two_legs -- the leg motion the wiring verdict rides on"}
+{"kind": "command", "wall": 1787029810.972, "mode": "kneel_two_legs", "kwargs": {}, "result": {"kind": "mode", "name": "kneel_two_legs", "mode_id": 5, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": 0.4, "tested_on_this_robot": false}}
+{"kind": "say", "wall": 1787029810.972, "msg": "-> mode kneel_two_legs"}
+{"kind": "phase", "wall": 1787029819.047, "label": "kneel", "seconds": 8.06, "cmd_msgs": 1598, "state_msgs": 646, "cmd_hz": 198.2, "state_hz": 80.1, "rtf": 0.278, "leg_speed_rms_rad_s": 4.4748, "pelvis_std_m": 0.0866, "joints": {"left_hip_pitch": {"cmd_sweep_rad": 2.76, "n": 646, "corr": 0.262, "rms_rad": 0.6}, "left_knee": {"cmd_sweep_rad": 4.088, "n": 646, "corr": -0.299, "rms_rad": 0.744}, "left_ankle_pitch": {"cmd_sweep_rad": 1.112, "n": 646, "corr": 0.263, "rms_rad": 0.232}, "right_knee": {"cmd_sweep_rad": 3.972, "n": 646, "corr": 0.573, "rms_rad": 0.693}, "left_shoulder_pitch": {"cmd_sweep_rad": 4.322, "n": 646, "corr": -0.55, "rms_rad": 1.087}}}
+{"kind": "say", "wall": 1787029819.047, "msg": "  left_hip_pitch: sweep 2.76 rad, corr 0.262, rms 0.6 rad"}
+{"kind": "say", "wall": 1787029819.047, "msg": "  left_knee: sweep 4.088 rad, corr -0.299, rms 0.744 rad"}
+{"kind": "say", "wall": 1787029819.047, "msg": "  left_ankle_pitch: sweep 1.112 rad, corr 0.263, rms 0.232 rad"}
+{"kind": "say", "wall": 1787029819.048, "msg": "  right_knee: sweep 3.972 rad, corr 0.573, rms 0.693 rad"}
+{"kind": "say", "wall": 1787029819.048, "msg": "  left_shoulder_pitch: sweep 4.322 rad, corr -0.55, rms 1.087 rad"}
+{"kind": "camera_frame", "wall": 1787029819.061, "path": "$PA_ROOT/artifacts/tracking/kneel.jpg", "bytes": 32494}
+{"kind": "say", "wall": 1787029819.061, "msg": "recovering to stand"}
+{"kind": "command", "wall": 1787029819.061, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1787029819.061, "msg": "-> mode idle"}
+{"kind": "command", "wall": 1787029825.272, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1787029825.272, "msg": "-> mode idle"}
+{"kind": "say", "wall": 1787029825.272, "msg": "rt/reset_pose/cmd '2' sent (harness, not robot)"}
+{"kind": "command", "wall": 1787029829.276, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1787029829.276, "msg": "-> mode idle"}
+{"kind": "say", "wall": 1787029833.29, "msg": "after reset: pelvis 0.21 m"}
+{"kind": "verdict", "wall": 1787029833.29, "verdict": "LEGS NOT WIRED -- left_knee: command swept 4.088 rad, state ignored it (corr -0.299); right_knee: borderline (corr 0.573, rms 0.693 rad) -- neither tracking nor deaf", "per_joint": {"left_knee": "not_wired", "right_knee": "inconclusive"}, "exit_code": 2}
+{"kind": "say", "wall": 1787029833.29, "msg": "VERDICT: LEGS NOT WIRED -- left_knee: command swept 4.088 rad, state ignored it (corr -0.299); right_knee: borderline (corr 0.573, rms 0.693 rad) -- neither tracking nor deaf"}
+{"kind": "say", "wall": 1787029833.29, "msg": "evidence: $PA_ROOT/artifacts/tracking/tracking-20260818-103957.jsonl"}

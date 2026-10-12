@@ -1,0 +1,334 @@
+diff --git a/action_provider/create_action_provider.py b/action_provider/create_action_provider.py
+index 9f24780..a542076 100644
+--- a/action_provider/create_action_provider.py
++++ b/action_provider/create_action_provider.py
+@@ -4,6 +4,7 @@ from action_provider.action_provider_dds import DDSActionProvider
+ from action_provider.action_provider_replay import FileActionProviderReplay
+ 
+ from action_provider.action_provider_wh_dds import DDSRLActionProvider
++from action_provider.action_provider_policy import ACTPolicyActionProvider
+ from pathlib import Path
+ 
+ 
+@@ -21,6 +22,8 @@ def create_action_provider(env,args):
+         )
+     elif args.action_source == "replay":
+         return FileActionProviderReplay(env=env,args_cli=args)
++    elif args.action_source == "policy":
++        return ACTPolicyActionProvider(env=env, args_cli=args)
+     else:
+         print(f"unknown action source: {args.action_source}")
+         return None
+\ No newline at end of file
+diff --git a/sim_main.py b/sim_main.py
+index dc4cfe5..14f7241 100644
+--- a/sim_main.py
++++ b/sim_main.py
+@@ -182,7 +182,14 @@ def main():
+     print("\ncreate environment...")
+     try:
+         env_cfg.seed = args_cli.seed
+-        env = gym.make(args_cli.task, cfg=env_cfg).unwrapped
++        import traceback as _tb
++        try:
++            env = gym.make(args_cli.task, cfg=env_cfg).unwrapped
++        except Exception as _inner_e:
++            print("\n=== FULL TRACEBACK FROM gym.make() ===")
++            _tb.print_exc()
++            print("=== END TRACEBACK ===\n")
++            raise
+         env.seed(args_cli.seed)
+         try:
+             sensors_dict = getattr(env.scene, "sensors", {})
+diff --git a/tasks/common_config/camera_configs.py b/tasks/common_config/camera_configs.py
+index 96bf1b9..1e01e16 100644
+--- a/tasks/common_config/camera_configs.py
++++ b/tasks/common_config/camera_configs.py
+@@ -54,18 +54,59 @@ class CameraBaseCfg:
+         if data_types is None:
+             data_types = ["rgb"]
+ 
++        # EXPERIMENT (2026-07-31): UNITREE_SIM_CAM_PULLBACK=<metres> translates the camera
++        # backwards along the parent -X axis, changing NOTHING else. Single-variable test
++        # for "is the sensor pipeline broken, or is the camera simply rendering the inside
++        # of the robot's own shell?" Sensor cameras return a smooth diagonal pattern while
++        # the viewport renders correctly; zero-distance geometry would look the same. If
++        # the pattern survives a 2 m pullback it is the pipeline; if a scene appears the
++        # camera was buried. Off by default.
++        _pull = os.environ.get("UNITREE_SIM_CAM_PULLBACK")
++        if _pull:
++            pos_offset = (pos_offset[0] - float(_pull), pos_offset[1], pos_offset[2])
++            print(f"[CAMCFG] pullback {_pull} m -> pos_offset={pos_offset}", flush=True)
++
++        spawn_cfg = sim_utils.PinholeCameraCfg(
++            focal_length=focal_length,
++            focus_distance=focus_distance,
++            horizontal_aperture=horizontal_aperture,
++            clipping_range=clipping_range,
++        )
++
++        # EXPERIMENT (2026-07-31): UNITREE_SIM_TILED_CAMERA=1 swaps CameraCfg for
++        # TiledCameraCfg. Reason: with CameraCfg every sensor camera returns a sheared
++        # 1-D pattern (exactly +1 px/row on head and both wrists, whatever their pose)
++        # while the viewport renders correctly. IsaacLab does not reshape rgb -- it only
++        # slices RGBA to RGB -- so the shear is already present in the Replicator
++        # annotator output. The log shows the readback node failing to register:
++        #   "Category 'Replicator' not accepted on node type
++        #    'omni.replicator.core.FabricReader'"
++        # TiledCamera uses a different readback path, so it either sidesteps the broken
++        # node or reproduces the fault and tells us it is lower down. Off by default.
++        if os.environ.get("UNITREE_SIM_TILED_CAMERA"):
++            from isaaclab.sensors import TiledCameraCfg
++
++            return TiledCameraCfg(
++                prim_path=prim_path,
++                update_period=update_period,
++                height=height,
++                width=width,
++                data_types=data_types,
++                spawn=spawn_cfg,
++                offset=TiledCameraCfg.OffsetCfg(
++                    pos=pos_offset,
++                    rot=rot_offset,
++                    convention="ros",
++                ),
++            )
++
+         return CameraCfg(
+             prim_path=prim_path,
+             update_period=update_period,
+             height=height,
+             width=width,
+             data_types=data_types,
+-            spawn=sim_utils.PinholeCameraCfg(
+-                focal_length=focal_length,
+-                focus_distance=focus_distance,
+-                horizontal_aperture=horizontal_aperture,
+-                clipping_range=clipping_range
+-            ),
++            spawn=spawn_cfg,
+             offset=CameraCfg.OffsetCfg(
+                 pos=pos_offset,
+                 rot=rot_offset,
+diff --git a/tasks/common_observations/camera_state.py b/tasks/common_observations/camera_state.py
+index 28be26a..e5fe0e9 100644
+--- a/tasks/common_observations/camera_state.py
++++ b/tasks/common_observations/camera_state.py
+@@ -113,6 +113,45 @@ def get_camera_image(
+     if "front_camera" in camera_keys:
+         head_image = env.scene["front_camera"].data.output["rgb"][0]  # [batch, height, width, 3]
+ 
++        # DIAGNOSTIC (2026-07-31): frames arriving in /dev/shm are a 1-D signal, not a
++        # scene -- every row identical up to a +1 px shift. This dumps the RENDER PRODUCT
++        # itself, before any numpy/encode/shm step, to settle whether the corruption is
++        # upstream (Isaac) or downstream (the writer). Set UNITREE_SIM_DEBUG_CAMDUMP=<path>.
++        # Writes once, then disables itself. Off by default.
++        _dump = os.environ.get("UNITREE_SIM_DEBUG_CAMDUMP")
++        if _dump and not _camera_cache.get('_dumped'):
++            _camera_cache['_dumped'] = True
++            try:
++                import numpy as _np
++                _cam = env.scene["front_camera"]
++                _np.save(_dump, head_image.detach().cpu().numpy())
++                print(f"[CAMDUMP] tensor shape={tuple(head_image.shape)} dtype={head_image.dtype} "
++                      f"contiguous={head_image.is_contiguous()} strides={head_image.stride()}",
++                      flush=True)
++                print(f"[CAMDUMP] cam.image_shape={getattr(_cam, 'image_shape', None)} "
++                      f"cfg={_cam.cfg.width}x{_cam.cfg.height}", flush=True)
++                # The RAW annotator buffer, before IsaacLab reshapes it. If its element
++                # count is not width*height*channels, the reshape is inventing a width
++                # and that is the shear.
++                _ann = getattr(_cam, "_annotators", None)
++                if _ann:
++                    for _k, _a in _ann.items():
++                        try:
++                            _d = _a.get_data()
++                            _arr = _np.asarray(_d if not isinstance(_d, dict) else _d.get("data"))
++                            _n = _arr.size
++                            print(f"[CAMDUMP] annotator[{_k}] raw shape={_arr.shape} "
++                                  f"dtype={_arr.dtype} elems={_n} "
++                                  f"vs 640*480*3={640*480*3} 640*480*4={640*480*4} "
++                                  f"implied_width_rgb={_n/3/480:.3f} "
++                                  f"implied_width_rgba={_n/4/480:.3f}", flush=True)
++                        except Exception as _e2:
++                            print(f"[CAMDUMP] annotator[{_k}] read failed: {_e2}", flush=True)
++                else:
++                    print("[CAMDUMP] no _annotators attribute on the camera", flush=True)
++            except Exception as _e:
++                print(f"[CAMDUMP] failed: {type(_e).__name__}: {_e}", flush=True)
++
+         if head_image.device.type == 'cpu':
+             images["head"] = head_image.numpy()
+         else:
+diff --git a/action_provider/action_provider_policy.py b/action_provider/action_provider_policy.py
+new file mode 100644
+index 0000000..08d4174
+--- /dev/null
++++ b/action_provider/action_provider_policy.py
+@@ -0,0 +1,166 @@
++# Copyright (c) 2025, Unitree Robotics Co., Ltd. All Rights Reserved.
++# License: Apache License, Version 2.0
++"""
++ACT policy action provider for Isaac Sim.
++
++Connects to the inference_server.py process (running in the `lerobot` env, Python 3.12)
++via ZMQ REQ/REP on tcp://127.0.0.1:55765. Start the server before launching Isaac Sim:
++
++    conda activate lerobot
++    python "$LEROBOT_TOOLS/inference_server.py" \\
++        --model_path .../checkpoints/last/pretrained_model
++
++Usage — pass to sim_main.py:
++    --action_source=policy
++    --enable_inspire_dds
++"""
++
++from __future__ import annotations
++
++import logging
++from typing import Optional
++
++import cv2
++import msgpack_numpy as mpn
++import numpy as np
++import torch
++import zmq
++
++from action_provider.action_base import ActionProvider
++
++logger = logging.getLogger(__name__)
++
++INFERENCE_ENDPOINT = "tcp://127.0.0.1:55765"
++
++# Arm joint names in training dataset order
++_ARM_JOINT_NAMES = [
++    "left_shoulder_pitch_joint",  "left_shoulder_roll_joint",
++    "left_shoulder_yaw_joint",    "left_elbow_joint",
++    "left_wrist_roll_joint",      "left_wrist_pitch_joint",
++    "left_wrist_yaw_joint",
++    "right_shoulder_pitch_joint", "right_shoulder_roll_joint",
++    "right_shoulder_yaw_joint",   "right_elbow_joint",
++    "right_wrist_roll_joint",     "right_wrist_pitch_joint",
++    "right_wrist_yaw_joint",
++]
++
++# Inspire joint names in sim order: right(6) then left(6)
++_INSPIRE_JOINT_NAMES = [
++    "R_pinky_proximal_joint", "R_ring_proximal_joint", "R_middle_proximal_joint",
++    "R_index_proximal_joint", "R_thumb_proximal_pitch_joint", "R_thumb_proximal_yaw_joint",
++    "L_pinky_proximal_joint", "L_ring_proximal_joint", "L_middle_proximal_joint",
++    "L_index_proximal_joint", "L_thumb_proximal_pitch_joint", "L_thumb_proximal_yaw_joint",
++]
++
++_TRAIN_H, _TRAIN_W = 720, 640
++
++
++class ACTPolicyActionProvider(ActionProvider):
++    """Runs the trained ACT policy by talking to the inference_server.py subprocess."""
++
++    def __init__(self, env, args_cli):
++        super().__init__("ACTPolicyActionProvider")
++        self.env = env
++        self._device = torch.device(env.device if hasattr(env, "device") else "cuda")
++
++        self._connect_zmq()
++        self._setup_joint_mapping()
++
++    # ------------------------------------------------------------------
++    # Setup
++    # ------------------------------------------------------------------
++
++    def _connect_zmq(self):
++        self._zmq_ctx = zmq.Context()
++        self._sock = self._zmq_ctx.socket(zmq.REQ)
++        self._sock.connect(INFERENCE_ENDPOINT)
++        # No timeout — block until the inference server responds.
++        # This means the sim will freeze on the first step if the server isn't up yet,
++        # but it will NOT crash. Start inference_server.py first.
++        logger.info("Connected to inference server at %s", INFERENCE_ENDPOINT)
++        print(f"[ACTPolicyActionProvider] Waiting for inference server at {INFERENCE_ENDPOINT} ...")
++
++    def _reconnect_zmq(self):
++        """Recreate the REQ socket after any error (REQ is stateful and breaks on failure)."""
++        try:
++            self._sock.close(linger=0)
++        except Exception:
++            pass
++        self._sock = self._zmq_ctx.socket(zmq.REQ)
++        self._sock.connect(INFERENCE_ENDPOINT)
++
++    def _setup_joint_mapping(self):
++        joint_names = list(self.env.scene["robot"].data.joint_names)
++
++        self._arm_idx = torch.tensor(
++            [joint_names.index(n) for n in _ARM_JOINT_NAMES],
++            dtype=torch.long, device=self._device,
++        )
++        self._inspire_idx = torch.tensor(
++            [joint_names.index(n) for n in _INSPIRE_JOINT_NAMES],
++            dtype=torch.long, device=self._device,
++        )
++        self._n_joints = len(joint_names)
++        logger.info("Joint mapping: %d arm, %d inspire, %d total",
++                    len(_ARM_JOINT_NAMES), len(_INSPIRE_JOINT_NAMES), self._n_joints)
++
++    # ------------------------------------------------------------------
++    # Observation helpers
++    # ------------------------------------------------------------------
++
++    def _get_state(self, joint_pos: torch.Tensor) -> np.ndarray:
++        """Build 26-dim state: [left_arm(7), right_arm(7), left_ee(6), right_ee(6)]."""
++        arm  = joint_pos[self._arm_idx]      # (14,)
++        insp = joint_pos[self._inspire_idx]  # (12,): [R(6), L(6)]
++        left_ee  = insp[6:12]
++        right_ee = insp[0:6]
++        return torch.cat([arm, left_ee, right_ee]).cpu().float().numpy()  # (26,)
++
++    def _get_image(self, cam_name: str) -> np.ndarray:
++        """Return (H, W, 3) uint8 numpy from sim camera, resized to training dims."""
++        try:
++            img = self.env.scene[cam_name].data.output["rgb"][0]
++            img_np = img.cpu().numpy() if img.is_cuda else img.numpy()
++            if img_np.dtype != np.uint8:
++                img_np = (img_np * 255).clip(0, 255).astype(np.uint8)
++            if img_np.shape[:2] != (_TRAIN_H, _TRAIN_W):
++                img_np = cv2.resize(img_np, (_TRAIN_W, _TRAIN_H))
++            return img_np
++        except Exception as e:
++            logger.warning("Camera %s unavailable: %s — using zeros", cam_name, e)
++            return np.zeros((_TRAIN_H, _TRAIN_W, 3), dtype=np.uint8)
++
++    # ------------------------------------------------------------------
++    # Main tick
++    # ------------------------------------------------------------------
++
++    def get_action(self, env) -> Optional[torch.Tensor]:
++        joint_pos = env.scene["robot"].data.joint_pos[0].to(self._device)
++
++        req = {
++            "state":   self._get_state(joint_pos),
++            "color_0": self._get_image("front_camera"),
++            "color_1": self._get_image("left_wrist_camera"),
++        }
++
++        try:
++            self._sock.send(mpn.packb(req))
++            raw = self._sock.recv()
++        except zmq.ZMQError as e:
++            logger.warning("ZMQ error (%s) — reconnecting to inference server", e)
++            self._reconnect_zmq()
++            return None  # controller falls back to last action this tick; recovers next tick
++
++        resp = mpn.unpackb(raw)
++        if "error" in resp:
++            logger.error("Inference server error: %s", resp["error"])
++            return None
++
++        action = torch.tensor(resp["action"], dtype=torch.float32, device=self._device)  # (26,)
++
++        full = joint_pos.clone()
++        full[self._arm_idx]           = action[:14]
++        full[self._inspire_idx[0:6]]  = action[20:26]  # right EE
++        full[self._inspire_idx[6:12]] = action[14:20]  # left EE
++
++        return full.unsqueeze(0)  # (1, N_joints)

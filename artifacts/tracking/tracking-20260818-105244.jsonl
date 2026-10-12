@@ -1,0 +1,54 @@
+{"kind": "say", "wall": 1787030565.178, "msg": "publisher bound on tcp://*:5556"}
+{"kind": "say", "wall": 1787030567.187, "msg": "planner parked in IDLE"}
+{"kind": "takeover_z", "wall": 1787030567.188, "label": "attached", "z": 0.9691, "t": 1046757.31}
+{"kind": "takeover_z", "wall": 1787030567.69, "label": "attached", "z": 0.9635, "t": 1046757.81}
+{"kind": "takeover_z", "wall": 1787030568.193, "label": "attached", "z": 0.9699, "t": 1046758.31}
+{"kind": "takeover_z", "wall": 1787030568.698, "label": "attached", "z": 0.9604, "t": 1046758.82}
+{"kind": "takeover_z", "wall": 1787030569.208, "label": "attached", "z": 0.9627, "t": 1046759.33}
+{"kind": "takeover_z", "wall": 1787030569.71, "label": "attached", "z": 0.9662, "t": 1046759.83}
+{"kind": "takeover_z", "wall": 1787030570.213, "label": "attached", "z": 0.964, "t": 1046760.33}
+{"kind": "takeover_z", "wall": 1787030570.717, "label": "attached", "z": 0.9668, "t": 1046760.84}
+{"kind": "takeover_z", "wall": 1787030571.223, "label": "attached", "z": 0.9602, "t": 1046761.34}
+{"kind": "takeover_z", "wall": 1787030571.728, "label": "attached", "z": 0.9646, "t": 1046761.85}
+{"kind": "takeover_z", "wall": 1787030572.233, "label": "attached", "z": 0.9662, "t": 1046762.35}
+{"kind": "takeover_z", "wall": 1787030572.74, "label": "attached", "z": 0.9666, "t": 1046762.86}
+{"kind": "takeover_z", "wall": 1787030573.243, "label": "attached", "z": 0.9693, "t": 1046763.36}
+{"kind": "takeover_z", "wall": 1787030573.748, "label": "attached", "z": 0.9606, "t": 1046763.87}
+{"kind": "takeover_z", "wall": 1787030574.252, "label": "attached", "z": 0.9679, "t": 1046764.37}
+{"kind": "takeover_z", "wall": 1787030574.758, "label": "attached", "z": 0.9628, "t": 1046764.88}
+{"kind": "takeover_z", "wall": 1787030575.264, "label": "attached", "z": 0.9686, "t": 1046765.38}
+{"kind": "takeover_z", "wall": 1787030575.767, "label": "attached", "z": 0.9605, "t": 1046765.89}
+{"kind": "takeover_z", "wall": 1787030576.268, "label": "attached", "z": 0.9645, "t": 1046766.39}
+{"kind": "takeover_z", "wall": 1787030576.777, "label": "attached", "z": 0.9629, "t": 1046766.9}
+{"kind": "takeover_z", "wall": 1787030577.284, "label": "attached", "z": 0.9691, "t": 1046767.4}
+{"kind": "takeover_z", "wall": 1787030577.791, "label": "attached", "z": 0.962, "t": 1046767.91}
+{"kind": "takeover_z", "wall": 1787030578.296, "label": "attached", "z": 0.9658, "t": 1046768.42}
+{"kind": "takeover_z", "wall": 1787030578.798, "label": "attached", "z": 0.9645, "t": 1046768.92}
+{"kind": "say", "wall": 1787030579.304, "msg": "pelvis right after takeover: 0.967"}
+{"kind": "say", "wall": 1787030579.31, "msg": "backend: mujoco"}
+{"kind": "say", "wall": 1787030580.311, "msg": "controller is driving (462 Hz rt/lowcmd)"}
+{"kind": "say", "wall": 1787030580.318, "msg": "pelvis 0.9661 m -- ON THE BAND; lowering then releasing"}
+{"kind": "command", "wall": 1787030580.318, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1787030580.318, "msg": "-> mode idle"}
+{"kind": "say", "wall": 1787030583.644, "msg": "after band release: pelvis 0.7646 m"}
+{"kind": "band_released", "wall": 1787030583.644, "pelvis_m": 0.7646}
+{"kind": "say", "wall": 1787030583.644, "msg": "phase A: quiet stand, 10 s (jitter + RTF baseline)"}
+{"kind": "phase", "wall": 1787030593.724, "label": "stand", "seconds": 10.05, "tilt_mean_deg": 0.0, "tilt_max_deg": 0.0, "nonfoot_ground_contact": [], "cmd_msgs": 4887, "state_msgs": 2011, "cmd_hz": 486.1, "state_hz": 200.0, "rtf": 1.0, "leg_speed_rms_rad_s": 0.0083, "pelvis_std_m": 0.0002, "pelvis_first_m": 0.765, "pelvis_last_m": 0.765, "pelvis_min_m": 0.765, "pelvis_max_m": 0.765, "pelvis_series_m": [0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765, 0.765], "joints": {"left_hip_pitch": {"cmd_sweep_rad": 0.027, "n": 2010, "corr": -0.604, "rms_rad": 0.133}, "left_knee": {"cmd_sweep_rad": 0.031, "n": 2010, "corr": 0.997, "rms_rad": 0.095}, "left_ankle_pitch": {"cmd_sweep_rad": 0.047, "n": 2010, "corr": 0.808, "rms_rad": 0.325}, "right_knee": {"cmd_sweep_rad": 0.018, "n": 2010, "corr": -0.152, "rms_rad": 0.025}, "left_shoulder_pitch": {"cmd_sweep_rad": 0.016, "n": 2010, "corr": -0.209, "rms_rad": 0.098}}}
+{"kind": "say", "wall": 1787030593.724, "msg": "stand: cmd 486.1 Hz, state 200.0 Hz, RTF 1.0, leg speed RMS 0.0083 rad/s, pelvis 0.765 -> 0.765 m (min 0.765, max 0.765, std 0.0002), tilt 0.0/0.0 deg mean/max, non-foot contact none"}
+{"kind": "camera_frame", "wall": 1787030593.731, "path": "$PA_ROOT/artifacts/tracking/stand.jpg", "bytes": 14705}
+{"kind": "say", "wall": 1787030593.731, "msg": "phase B: kneel_two_legs -- the leg motion the wiring verdict rides on"}
+{"kind": "command", "wall": 1787030593.731, "mode": "kneel_two_legs", "kwargs": {}, "result": {"kind": "mode", "name": "kneel_two_legs", "mode_id": 5, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": 0.4, "tested_on_this_robot": false}}
+{"kind": "say", "wall": 1787030593.731, "msg": "-> mode kneel_two_legs"}
+{"kind": "phase", "wall": 1787030601.941, "label": "kneel", "seconds": 8.17, "tilt_mean_deg": 0.0, "tilt_max_deg": 0.1, "nonfoot_ground_contact": ["left_knee_link", "right_knee_link"], "cmd_msgs": 3853, "state_msgs": 1633, "cmd_hz": 471.6, "state_hz": 199.9, "rtf": 0.999, "leg_speed_rms_rad_s": 0.3991, "pelvis_std_m": 0.1078, "pelvis_first_m": 0.765, "pelvis_last_m": 0.416, "pelvis_min_m": 0.415, "pelvis_max_m": 0.765, "pelvis_series_m": [0.765, 0.765, 0.756, 0.717, 0.655, 0.583, 0.487, 0.418, 0.42, 0.419, 0.418, 0.415, 0.417, 0.417, 0.417, 0.418, 0.416, 0.419, 0.418, 0.416, 0.418, 0.418, 0.417, 0.418, 0.417, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416, 0.416], "joints": {"left_hip_pitch": {"cmd_sweep_rad": 0.796, "n": 1633, "corr": 0.912, "rms_rad": 0.126}, "left_knee": {"cmd_sweep_rad": 2.257, "n": 1633, "corr": 0.989, "rms_rad": 0.19}, "left_ankle_pitch": {"cmd_sweep_rad": 0.905, "n": 1633, "corr": 0.45, "rms_rad": 0.189}, "right_knee": {"cmd_sweep_rad": 1.986, "n": 1633, "corr": 0.987, "rms_rad": 0.283}, "left_shoulder_pitch": {"cmd_sweep_rad": 0.539, "n": 1633, "corr": 0.943, "rms_rad": 0.282}}}
+{"kind": "say", "wall": 1787030601.942, "msg": "  left_hip_pitch: sweep 0.796 rad, corr 0.912, rms 0.126 rad"}
+{"kind": "say", "wall": 1787030601.942, "msg": "  left_knee: sweep 2.257 rad, corr 0.989, rms 0.19 rad"}
+{"kind": "say", "wall": 1787030601.943, "msg": "  left_ankle_pitch: sweep 0.905 rad, corr 0.45, rms 0.189 rad"}
+{"kind": "say", "wall": 1787030601.944, "msg": "  right_knee: sweep 1.986 rad, corr 0.987, rms 0.283 rad"}
+{"kind": "say", "wall": 1787030601.944, "msg": "  left_shoulder_pitch: sweep 0.539 rad, corr 0.943, rms 0.282 rad"}
+{"kind": "camera_frame", "wall": 1787030601.947, "path": "$PA_ROOT/artifacts/tracking/kneel.jpg", "bytes": 14693}
+{"kind": "say", "wall": 1787030601.947, "msg": "recovering to stand"}
+{"kind": "command", "wall": 1787030601.947, "mode": "idle", "kwargs": {}, "result": {"kind": "mode", "name": "idle", "mode_id": 0, "mode_kind": "static", "held": true, "speed": -1.0, "height_m": null, "tested_on_this_robot": true}}
+{"kind": "say", "wall": 1787030601.947, "msg": "-> mode idle"}
+{"kind": "verdict", "wall": 1787030607.953, "verdict": "LEGS WIRED -- left_knee: tracks (corr 0.989, rms 0.19 rad); right_knee: tracks (corr 0.987, rms 0.283 rad)", "per_joint": {"left_knee": "wired", "right_knee": "wired"}, "exit_code": 0}
+{"kind": "say", "wall": 1787030607.953, "msg": "VERDICT: LEGS WIRED -- left_knee: tracks (corr 0.989, rms 0.19 rad); right_knee: tracks (corr 0.987, rms 0.283 rad)"}
+{"kind": "say", "wall": 1787030607.953, "msg": "evidence: $PA_ROOT/artifacts/tracking/tracking-20260818-105244.jsonl"}

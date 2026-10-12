@@ -1,0 +1,51 @@
+# --- Secrets — never commit -------------------------------------------------
+.env
+*.key
+*.pem
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.uv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Large vendor source mirrors (kept on disk, untracked) ------------------
+reference/
+
+# --- Datasheets / large binaries (facts extracted into docs/hardware_notes.md)
+*.pdf
+
+# --- Runtime output ---------------------------------------------------------
+# artifacts/ holds the committed EVIDENCE this repo's claims cite, so it is
+# tracked. These subdirectories are regenerable run output and are not.
+artifacts/live/
+artifacts/hw/
+artifacts/sessions/
+artifacts/compare/
+artifacts/isaac_live/
+
+# Recorded HW fixtures can be large; track selectively
+tests/fixtures/*.mp4
+tests/fixtures/*.bag
+
+# Compiled LD_PRELOAD shim (source ships, the object does not)
+tools/*.so
+
+# --- OS / editor ------------------------------------------------------------
+.DS_Store
+*.swp
+.idea/
+.vscode/
+.mcp.json
+.cursor/
+**/.mcp.json
+**/.cursor/
+
+# --- Agent/session tooling — never part of this repository ------------------
+.claude/
+.agents/

@@ -1,0 +1,142 @@
+{
+  "_README": [
+    "Real observations captured from the live ROSPug on 2026-07-17 over rosbridge.",
+    "FIDELITY MATTERS — read `_fidelity` on each entry before using it as a fixture:",
+    "  'exact'   = the literal value(s) observed, safe to assert against.",
+    "  'summary' = we recorded aggregate stats, NOT the full raw array. Do not",
+    "              fabricate the missing elements; generate synthetic arrays that",
+    "              MATCH these stats instead, and keep them clearly synthetic.",
+    "The only full-fidelity payload we hold is the JPEG: rospug_frame_640x360.jpg"
+  ],
+  "robot": {
+    "model": "HiWonder ROSPug",
+    "sku": "HIWND-380",
+    "hostname": "rospug",
+    "mdns": "rospug.local",
+    "ip_at_capture": "<ROBOT_IP>",
+    "ip_note": "DHCP lease from the PC (10.42.0.0/24, PC=10.42.0.1). Will change. Use mDNS.",
+    "os": "Ubuntu 18.04 (aarch64)",
+    "kernel": "4.9.253-tegra",
+    "ros_distro": "melodic",
+    "ros_master_uri": "http://localhost:11311",
+    "ssh": {"user": "hiwonder", "password": "<FACTORY_DEFAULT>", "_fidelity": "placeholder; the vendor factory password is deliberately not reproduced here (user is exact)"},
+    "open_ports": {"22": "ssh", "4000": "NoMachine", "8080": "web_video_server", "9090": "rosbridge"},
+    "clock_at_capture": "2023-03-02 21:19:51 CST (Asia/Shanghai)",
+    "clock_note": "~3 years behind. Jetson Nano has no RTC battery. NEVER trust robot-side timestamps.",
+    "graph_size": {"topics": 105, "services": 158, "nodes": 26}
+  },
+
+  "scan": {
+    "_fidelity": "summary",
+    "topic": "/scan",
+    "type": "sensor_msgs/LaserScan",
+    "beams_total": 451,
+    "beams_valid": 219,
+    "range_min_observed_m": 0.23,
+    "range_max_observed_m": 11.98,
+    "note": "Matches the Oradar MS200 spec (0.03-12m). Full 451-element array NOT captured."
+  },
+
+  "joint_states": {
+    "_fidelity": "exact",
+    "topic": "/joint_states",
+    "type": "sensor_msgs/JointState",
+    "name": ["lf_joint", "lf_thigh", "lf_calf", "lb_joint", "lb_thigh", "lb_calf",
+             "rf_joint", "rf_thigh", "rf_calf", "rb_joint", "rb_thigh", "rb_calf"],
+    "position": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "note": "12 DOF confirmed. WARNING: every position read exactly 0.0, which is suspicious for a robot at rest. Strongly suspect servo readback requires publishing /ros_robot_controller/enable_reception = true first (same gotcha as TonyPi's board.enable_reception(True)). VERIFY before trusting these values as real angles."
+  },
+
+  "imu": {
+    "_fidelity": "summary",
+    "topics": {"fused": "/imu", "raw": "/ros_robot_controller/imu_raw"},
+    "type": "sensor_msgs/Imu",
+    "fused_sample": {"linear_acceleration_z": 10.54, "orientation_w": 0.715},
+    "raw_sample": {"linear_acceleration_z": 10.12, "orientation_w": 0.0},
+    "note": "accel z ~= gravity, sane. Raw has no orientation fusion (w=0)."
+  },
+
+  "battery": {
+    "_fidelity": "exact",
+    "topic": "/ros_robot_controller/battery",
+    "type": "std_msgs/UInt16",
+    "unit": "millivolts",
+    "samples_mv": [10345, 10065, 10080, 10036, 10060, 10050, 10036, 10040, 10060, 10045],
+    "observed_drain_rate_mv_per_min": -13.9,
+    "note": "3S LiPo. Was at ~25% and DRAINING even with the charger attached (robot ON drew more than the 12.6V/2A charger supplies). 3.35 V/cell vs a 3.30 V/cell floor."
+  },
+
+  "tf": {
+    "_fidelity": "summary",
+    "topic": "/tf",
+    "transforms_per_msg": 12,
+    "chain": "base_link -> joint_Link_N -> thigh_Link_N -> calf_Link_N",
+    "sample_frames": ["thigh_Link_4->calf_Link_4", "base_link->joint_Link_4",
+                      "joint_Link_4->thigh_Link_4", "thigh_Link_2->calf_Link_2"]
+  },
+
+  "camera": {
+    "_fidelity": "exact",
+    "topic": "/csi_camera/image_raw",
+    "type": "sensor_msgs/Image",
+    "width": 640,
+    "height": 360,
+    "encoding": "rgb8",
+    "sensor": "IMX219 (CSI/MIPI), device /dev/video0, vi-output imx219 7-0010",
+    "driver": "gscam via nvarguscamerasrc sensor-id=0",
+    "fixture_file": "rospug_frame_640x360.jpg",
+    "argus_mode_selected": "mode 5 = 1280x720 @ 120fps for a 640x360@30 request",
+    "known_fault": "gscam started, published ~79s, then CLEANLY SELF-EXITED ('Cleaning up stream and exiting') while the rest of ROS kept running. Restarting it worked and it then stayed up >2min. Root cause UNKNOWN. A camera liveness watchdog is mandatory.",
+    "web_video_server_note": "CRITICAL: /snapshot and /stream BLOCK FOREVER (0 bytes, no HTTP response) when a topic is advertised but unpublished. The :8080 index still returns 200 in ~10ms, so the server looks healthy. Always use a timeout."
+  },
+
+  "message_shapes": {
+    "_fidelity": "exact",
+    "_note": "Field names and types read from rosapi/message_details on the live robot.",
+    "pug_control/Velocity": {"x": "float32", "y": "float32", "yaw_rate": "float32", "stop": "bool"},
+    "pug_control/Pose": {"roll": "float32", "pitch": "float32", "yaw": "float32",
+                          "height": "float32", "x_shift": "float32",
+                          "stance_x": "float32", "stance_y": "float32", "run_time": "float32"},
+    "pug_control/Gait": {"overlap_time": "float32", "swing_time": "float32",
+                          "clearance_time": "float32", "z_clearance": "float32"},
+    "pug_control/WebController": {"gait": "float32", "foot_height": "float32", "period": "float32"},
+    "ros_robot_controller/SetBusServoState": {
+      "state": "ros_robot_controller/BusServoState", "duration": "float64",
+      "_BusServoState": {"present_id": "uint16", "target_id": "uint16", "position": "uint16",
+                          "offset": "int16", "voltage": "uint16", "temperature": "uint16",
+                          "position_limit": "uint16"}
+    }
+  },
+
+  "service_signatures": {
+    "_fidelity": "exact",
+    "/pug_control/go_home": "std_srvs/Empty",
+    "/pug_control/run_action_group": "pug_control/SetActionName{string name}",
+    "/pug_control/enable_sim": "std_srvs/SetBool",
+    "/self_balancing/set_running": "std_srvs/SetBool",
+    "/performance/enter": "std_srvs/Trigger",
+    "/performance/exit": "std_srvs/Trigger",
+    "/performance/set_self_balancing": "std_srvs/SetBool",
+    "/performance/heartbeat": "std_srvs/SetBool",
+    "/performance/set_target": "pug_app/SetTarget{string data}",
+    "/ros_robot_controller/robot/set_leg_ik": "ros_robot_controller/SetLegIK{float32 position}",
+    "/ros_robot_controller/robot/get_leg_position": "ros_robot_controller/GetLegPosition",
+    "/ros_robot_controller/bus_servo/get_state": "ros_robot_controller/GetBusServoState{GetBusServoCmd cmd}",
+    "/lidar_app/set_running": "pug_control/SetInt64{int64 data}"
+  },
+
+  "on_robot_paths": {
+    "_fidelity": "exact",
+    "workspace": "/home/hiwonder/pug",
+    "workspace_duplicate": "/home/hiwonder/Desktop/pug",
+    "third_party_ws": "/home/hiwonder/third_party/ros_ws",
+    "bringup_launch": "/home/hiwonder/pug/src/pug_bringup/launch/app_bringup.launch",
+    "camera_launch": "/home/hiwonder/pug/src/pug_peripherals/launch/csi_camera.launch",
+    "ros_logs": "/home/hiwonder/.ros/log/latest/",
+    "gscam_binary": "/opt/ros/melodic/lib/gscam/gscam",
+    "packages": ["lab_config", "pug_app", "pug_bringup", "pug_driver/pug_control",
+                 "pug_description", "pug_example", "pug_navigation", "pug_peripherals",
+                 "pug_driver/pug_sdk", "pug_slam", "pug_tutorial", "pug_driver/ros_robot_controller"],
+    "_MISSED": "We never copied /home/hiwonder/pug/src — it holds pug_control's real UNITS and LIMITS. scripts/grab_everything.sh fetches it first thing on next contact."
+  }
+}

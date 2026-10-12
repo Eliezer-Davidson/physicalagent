@@ -1,0 +1,7 @@
+pub -> sub         sent   rcvd  expected  result
+MuJoCo->MuJoCo      673    385  traffic   as documented
+Isaac ->Isaac       681    389  traffic   as documented
+Isaac ->MuJoCo      681    389  traffic   as documented
+MuJoCo->Isaac       672    383  traffic   as documented
+
+One DDS world: Isaac and MuJoCo interpreters see each other.

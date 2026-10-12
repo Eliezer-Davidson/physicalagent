@@ -1,0 +1,43 @@
+[1/4] MuJoCo simulator (windowed, hands=rigid) -> $PA_ROOT/artifacts/live/sim.log
+[2/4] SONIC policy -> $PA_ROOT/artifacts/live/policy.log   (TensorRT load, ~35 s)
+[3/4] policy ready -- handing over to scripts/getup_probe.py
+[4/4] it will send start, release the band, then take over
+
+[getup] publisher bound on tcp://*:5556
+[getup] planner parked in IDLE
+[getup] pelvis 0.967 m, contacts NONE -- still ON THE BAND; lowering deterministically
+[getup] -> mode idle (speed -1.0, held True)
+[getup] band bring-down -> standing
+[getup] baseline_idle: pelvis 0.785 -> 0.784 m (min 0.784, max 0.785)
+[getup] === JUMP: does jump_forward ever leave the floor? ===
+[getup] -> mode jump_forward (speed -1.0, held False)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] jump verdict: NO FLIGHT: a foot was always on the floor (0/438 samples contact-free)
+[getup] === ATTEMPT crawl_route: crawl -> kneel_two_legs -> idle ===
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] -> mode lie_face_down (speed -1.0, held True)
+[getup] on the floor: pelvis 0.152 m, contacts R_hand_base_link, left_hip_yaw_link, left_wrist_pitch_link, right_hip_roll_link, right_shoulder_yaw_link
+[getup] -> mode crawl (speed 0.0, held True)
+[getup] crawl_route:crawl: pelvis 0.153 -> 0.449 m (min 0.153, max 0.454), non-foot contact: L_middle_intermediate, L_pinky_intermediate, L_ring_intermediate, R_hand_base_link
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] crawl_route:kneel_two_legs: pelvis 0.449 -> 0.421 m (min 0.413, max 0.449), non-foot contact: L_pinky_intermediate, L_ring_intermediate, R_index_intermediate, R_thumb_distal
+[getup] -> mode idle (speed -1.0, held True)
+[getup] crawl_route:idle: pelvis 0.421 -> 0.787 m (min 0.421, max 0.808), non-foot contact: left_knee_link, right_knee_link
+[getup] ATTEMPT crawl_route: STOOD UP
+[getup] === REAL FALL: crawl -> elbow_crawl transition ===
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] -> mode crawl (speed 0.0, held True)
+[getup] -> mode elbow_crawl (speed 0.0, held True)
+[getup] elbow_crawl round 1 did not fall (the 1-in-5 case); returning to crawl to try once more
+[getup] -> mode crawl (speed 0.0, held True)
+[getup] -> mode elbow_crawl (speed 0.0, held True)
+[getup] no fall induced in two rounds
+[getup] -> mode idle (speed -1.0, held True)
+
+[getup] SUMMARY
+  {"attempt": "jump", "best_streak": 0, "airborne": 0, "total": 438, "verdict": "NO FLIGHT: a foot was always on the floor"}
+  {"attempt": "crawl_route", "stages": [{"label": "crawl_route:crawl", "z_start": 0.153, "z_end": 0.449, "z_max": 0.454, "z_min": 0.153, "nonfoot_contacts": ["L_middle_intermediate", "L_pinky_intermediate", "L_ring_intermediate", "R_hand_base_link", "R_index_intermediate", "R_middle_intermediate", "R_pinky_intermediate", "R_thumb_distal", "left_elbow_link", "left_hip_yaw_link", "left_knee_link", "le
+  {"attempt": "real_fall", "induced": false}
+
+[live] shutting down

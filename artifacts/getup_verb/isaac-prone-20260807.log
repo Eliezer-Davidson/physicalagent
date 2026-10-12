@@ -1,0 +1,34 @@
+[1/3] Isaac Sim (Isaac-Move-Cylinder-G129-Inspire-Wholebody) -> $PA_ROOT/artifacts/isaac_live/sim.log   (cold start can take ~2 min)
+[2/3] SONIC policy -> $PA_ROOT/artifacts/isaac_live/policy.log   (TensorRT load, ~35 s)
+[3/3] policy ready -- handing over to scripts/getup_verb_probe.py
+
+[verb] WARNING: SONIC_FALL_RESET_M not lowered — the sim will teleport-reset any robot below 0.20 m, which is above the prone pelvis (~0.15 m). Every trial would be void. Set it to 0.05.
+[verb] planner parked in IDLE
+1786088281.903862 [0]     python: selected interface "lo" is not multicast-capable: disabling multicast
+[getup] band already off: pelvis 0.789 m with foot contact
+[getup] === prone trial 1: reset -> induce -> recover_from_fall ===
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode kneel_two_legs (speed -1.0, held True)
+[getup] kneel descent did not happen within 12 s
+[getup] -> mode lie_face_down (speed -1.0, held True)
+*** FALL DETECTED (in mode 'idle': pelvis 0.25 m is below the 0.30 m floor and tilt 56 deg exceeds 40 deg); auto-damp is OFF ***
+[getup] on the floor: pelvis 1.257 m, contacts feet only
+*** FALL DETECTED (in mode 'crawl': pelvis 0.09 m is below the 0.26 m floor); auto-damp is OFF ***
+[getup] prone trial 1: verb says False, body says False
+[getup] === prone trial 2: reset -> induce -> recover_from_fall ===
+[getup] sim reset recovery 1/2: rt/reset_pose/cmd '2' (this is the harness, not the robot)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] sim reset recovery -> NOT standing
+[getup] sim reset recovery 2/2: rt/reset_pose/cmd '2' (this is the harness, not the robot)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] -> mode idle (speed -1.0, held True)
+[getup] sim reset recovery -> NOT standing
+[getup] STOPPING prone after 2/10: could not reset the robot to standing; the band recovery failed. Restart the simulator to continue.
+[getup] -> mode idle (speed -1.0, held True)
+
+[verb] SUMMARY
+  {"geometry": "prone", "asked": 10, "attempted": 2, "scored": 1, "stood_up": 0, "rate": "0/1", "truncated": "could not reset the robot to standing; the band recovery failed. Restart the simulator to continue.", "aborts": ["no standing start"], "disagreements": []}
+[verb] per-trial detail: $PA_ROOT/artifacts/getup_verb/trials.jsonl
+
+[isaac] shutting down

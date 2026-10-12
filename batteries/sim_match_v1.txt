@@ -1,0 +1,81 @@
+# sim_match_v1 -- the deterministic sim-vs-real battery.
+#
+# THE SAME FILE runs against the physical G1 (hardware day, recorder on) and
+# against the MuJoCo SONIC sim off-robot. scripts/sim_match_compare.py then
+# diffs the two captures segment by segment; segments are the spans BETWEEN
+# consecutive `mark` lines.
+#
+# Design constraints (enforced by tests/test_batteries.py):
+#   - every speed/rate/height inside the tier table clamps
+#   - raised-arm holds <= 8 s of sleep: motor 22's driver heats ~215 C/min
+#     (MEASURED 2026-08-19) holding a raised arm; 4 s costs ~+14 C
+#   - ends with `stop`; nominal duration ~100 s so it repeats 2-3x per day
+#
+# Run it (hardware -- start scripts/hw_recorder.py FIRST, link up):
+#   PYTHONPATH=. <python> scripts/g1_sonic_session.py --real \
+#       --i-am-at-the-estop --script batteries/sim_match_v1.txt
+# Run it (sim -- SONIC+MuJoCo already up via scripts/sonic_sim_up.sh):
+#   PYTHONPATH=. <python> scripts/g1_sonic_session.py \
+#       --script batteries/sim_match_v1.txt
+
+mark battery-start
+status
+
+# 20 s of commanded quiet: the in-battery idle baseline (IMU noise, balance
+# micro-corrections, thermal floor) under SONIC control, not zero-torque idle.
+mark idle-baseline
+sleep 20
+
+# Upper body: each pose raised 4 s, recovered to neutral 3 s. The recovery
+# spans matter as much as the holds -- they carry the cooling transient.
+mark arms-forward
+arms arms_forward
+sleep 4
+arms neutral
+sleep 3
+mark arms-up
+arms arms_up
+sleep 4
+arms neutral
+sleep 3
+mark wave
+arms wave_right
+sleep 4
+arms neutral
+sleep 3
+
+# Height staircase: down to a squat-ish 0.60 m, back to hang-height 0.72 m.
+mark height-down
+height 0.60
+sleep 4
+mark height-up
+height 0.72
+sleep 4
+
+# Locomotion staircase at the three tier-table speeds. `walk` blocks for its
+# own duration then stops; the sleep after is settle time.
+mark walk-slow
+walk 0.1 3
+sleep 2
+mark walk-medium
+walk 0.2 3
+sleep 2
+mark walk-fast
+walk 0.3 3
+sleep 2
+
+# Yaw both ways -- the ankle-roll pair works hardest here; this is the
+# segment that speaks to the unexplained right/left ankle thermal asymmetry.
+mark turn-left
+turn 0.2 3
+sleep 2
+mark turn-right
+turn -0.2 3
+sleep 2
+
+# 10 s recovery under control, then a final status into the log.
+mark recovery
+stop
+sleep 10
+status
+mark battery-end

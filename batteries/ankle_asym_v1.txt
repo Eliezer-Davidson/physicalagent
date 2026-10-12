@@ -1,0 +1,58 @@
+# ankle_asym_v1 -- designed probe for the UNEXPLAINED right/left ankle
+# thermal asymmetry (right_ankle_roll 42->71 C vs left 40->44 C over 7 min,
+# MEASURED 2026-08-19; peak rise 137.7 C/min during walking).
+#
+# Structure: alternating walk blocks and long stands, then yaw both ways.
+# The stands are the experiment as much as the walks -- they separate "heats
+# under load" from "heats under balance", and carry the cooling constants.
+# The thermal watch is armed during any --script run; warn is 80 C.
+#
+# While this runs, ALSO check the physical hypotheses the data cannot see:
+# harness pulling one leg, foot hanging at a different angle, cable tension.
+# The ankle is a coupled pitch/roll linkage in series mode -- compare BOTH
+# ankle motors on BOTH sides, in temp_driver, never temp_winding.
+
+mark battery-start
+status
+mark stand-cold
+sleep 60
+
+mark walk-block-1
+walk 0.2 5
+sleep 1
+walk 0.2 5
+sleep 1
+mark stand-recover-1
+sleep 45
+
+mark walk-block-2
+walk 0.2 5
+sleep 1
+walk 0.2 5
+sleep 1
+mark stand-recover-2
+sleep 45
+
+mark walk-block-3
+walk 0.2 5
+sleep 1
+walk 0.2 5
+sleep 1
+mark stand-recover-3
+sleep 45
+
+mark turn-block
+turn 0.3 4
+sleep 1
+turn -0.3 4
+sleep 1
+turn 0.3 4
+sleep 1
+turn -0.3 4
+sleep 1
+
+mark stand-final
+sleep 45
+stop
+status
+mark battery-end
