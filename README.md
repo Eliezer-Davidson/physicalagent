@@ -14,6 +14,8 @@
 
 # PhysicalAgent
 
+[![tests](https://github.com/Eliezer-Davidson/physicalagent/actions/workflows/tests.yml/badge.svg)](https://github.com/Eliezer-Davidson/physicalagent/actions/workflows/tests.yml)
+
 One `RobotAdapter` interface with four robot bodies behind it — a tabletop
 humanoid, a hexapod, a quadruped and a 35 kg Unitree G1 under NVIDIA SONIC —
 and a typed safety layer between them and Google Gemini Robotics-ER. Gemini has
