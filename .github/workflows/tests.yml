@@ -8,6 +8,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: vendor tree (NVlabs/GR00T-WholeBodyControl, sparse)
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse             https://github.com/NVlabs/GR00T-WholeBodyControl "$HOME/GR00T-WholeBodyControl"
+          git -C "$HOME/GR00T-WholeBodyControl" sparse-checkout set             gear_sonic_deploy gear_sonic/data/robot_model/model_data/g1 gear_sonic/utils/mujoco_sim
       - run: pip install -e ".[dev]"
       - name: pytest (offline)
         run: |
