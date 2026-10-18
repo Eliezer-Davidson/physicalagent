@@ -19,7 +19,7 @@ jobs:
             git sparse-checkout set gear_sonic_deploy gear_sonic/utils gear_sonic/data/robot_model/model_data/g1 &&
             git checkout --quiet "$BASE" &&
             git lfs pull --include "gear_sonic_deploy/**,gear_sonic/utils/**,gear_sonic/data/robot_model/model_data/g1/**" &&
-            git apply --binary --ignore-whitespace "$GITHUB_WORKSPACE/third_party/groot-wbc-local/local-sonic-mods.patch"
+            GIT_LFS_SKIP_SMUDGE=1 git apply --binary --ignore-whitespace "$GITHUB_WORKSPACE/third_party/groot-wbc-local/local-sonic-mods.patch"
           } 2>&1 | tee v.txt || {
             tail -n 10 v.txt | while IFS= read -r l; do echo "::error::${l}"; done
             exit 1; }
