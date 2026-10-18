@@ -1,5 +1,3 @@
-> **Project in progress — may contain inaccuracies.**
-
 <p align="center">
   <img src="docs/media/hero_sim.png" alt="Five simulation frames in two rows: a MuJoCo robot down after an induced fall and the same robot recovered; the furnished-lounge head-camera frame beside the third-person view at the same moment; an Isaac Sim head-camera frame served through the ZMQ sidecar">
 </p>
@@ -23,6 +21,11 @@ driven **two of the four on hardware**: the quadruped and the G1.
 
 **1,753 offline tests**, and every measured number below cites the file it comes
 from — indexed claim by claim in **[`docs/EVIDENCE.md`](docs/EVIDENCE.md)**.
+
+Install and verify offline: `pip install -e ".[dev]"`, then
+`pytest -m "not hardware" -q` — 1,753 tests in seconds: no robot, no network, no key.
+
+*Published as a clean snapshot of a private working repo.*
 
 ---
 
