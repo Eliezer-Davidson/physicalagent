@@ -9,4 +9,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
-      - run: pytest -m "not hardware" -q
+      - name: pytest (offline)
+        run: |
+          set -o pipefail
+          pytest -m "not hardware" -q 2>&1 | tee out.txt || {
+            tail -n 10 out.txt | while IFS= read -r l; do echo "::error::${l}"; done
+            exit 1; }
